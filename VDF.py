@@ -1,11 +1,9 @@
 import argparse
 import plasmapy
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import scipy.constants as cst
 from astropy import units as u
-from mpl_toolkits.mplot3d import Axes3D
 from mayavi import mlab
 
 
@@ -78,12 +76,7 @@ class VDF:
 
         # Let z be the direction parallel ot the field,
         # and x, y perpendicular directions in plane perpendicular to the field
-        """vperpx = np.linspace(v_perp_min, v_perp_max, meshgrid_points)
-        vperpy = np.linspace(v_perp_min, v_perp_max, meshgrid_points)
-        vparz = np.linspace(v_par_min, v_par_max, meshgrid_points)
-
-        x, y, z = np.meshgrid(vperpx, vperpy, vparz)"""
-
+        
         x, y, z = np.ogrid[v_perp_min:v_perp_max:meshgrid_points,
                            v_perp_min:v_perp_max:meshgrid_points,
                            v_par_min:v_par_max:meshgrid_points]
