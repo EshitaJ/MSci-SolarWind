@@ -3,7 +3,6 @@ import plasmapy
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import cv2 as cv
 import scipy.constants as cst
 from astropy import units as u
 from mpl_toolkits.mplot3d import Axes3D
@@ -15,6 +14,7 @@ constants = {
     "T_par": 3e5,  # K
     "B": 108e-9  # T
 }
+
 
 class VDF:
     """
@@ -72,12 +72,11 @@ class VDF:
 
         z = core + beam
 
-
         C = plt.contour(x, y, z)
-        plt.rc('text', usetex=True)
-        plt.xlabel("$V_{\parallel}$   (m/s)", fontsize=20)
-        plt.ylabel("$V_{\perp}$   (m/s)", fontsize=20)
-        plt.clabel(C, inline = 1, fontsize = 10)
+        #plt.rc('text', usetex=True)
+        #plt.xlabel("$V_{\parallel}$   (m/s)", fontsize=20)
+        #plt.ylabel("$V_{\perp}$   (m/s)", fontsize=20)
+        #plt.clabel(C, inline = 1, fontsize = 10)
 
         plt.show()
 
