@@ -38,14 +38,16 @@ class VDF:
                 n*u.m**-3,
                 ion="p+"))/(u.m/u.s)
 
-    def VDF_2D_plot(
-            self,
-            core_fraction=0.8,
-            meshgrid_points=600,
-            v_perp_min=-1e1,
-            v_perp_max=1e1,
-            v_par_min=-1e6,
-            v_par_max=1e6):
+        self.VDF_2D = None
+        self.VDF_3D = None
+
+    def gen_2D(self,
+               core_fraction=0.8,
+               meshgrid_points=600,
+               v_perp_min=-1e6,
+               v_perp_max=1e6,
+               v_par_min=-1e6,
+               v_par_max=1e6):
 
         vperp = np.linspace(v_perp_min, v_perp_max, meshgrid_points)
         vpar = np.linspace(v_par_min, v_par_max, meshgrid_points)
@@ -55,9 +57,41 @@ class VDF:
         core = self.BiMax_2D(x, y, 0, self.T_par, self.T_perp, core_fraction*self.n)
         beam = self.BiMax_2D(x, y, self.V_A, self.T_par, self.T_perp, (1-core_fraction)*self.n)
 
-        z = core + beam
+        c = core + beam
 
-        C = plt.contour(x, y, z)
+        self.VDF_2D = (x, y, c)
+
+    def gen_3D(
+            self,
+            core_fraction=0.8,
+            meshgrid_points=10j,
+            v_perp_min=-1e6,
+            v_perp_max=1e6,
+            v_par_min=-1e6,
+            v_par_max=1e6):
+        # Let z be the direction parallel ot the field,
+        # and x, y perpendicular directions in plane perpendicular to the field
+
+        x, y, z = np.mgrid[v_perp_min:v_perp_max:meshgrid_points,
+                           v_perp_min:v_perp_max:meshgrid_points,
+                           v_par_min:v_par_max:meshgrid_points]
+
+        print(x, y, z)
+
+        core = self.BiMax_3D(z, x, y, 0, self.T_par, self.T_perp, core_fraction * self.n)
+        beam = self.BiMax_3D(z, x, y, self.V_A, self.T_par, self.T_perp, (1 - core_fraction) * self.n)
+
+        c = core + beam
+
+        # print(c)
+
+        self.VDF_3D = (x, y, z, c)
+
+    def plot_2D(self):
+
+        x, y, c = self.VDF_2D
+
+        C = plt.contour(x, y, c)
         # plt.rc('text', usetex=True)
         # plt.xlabel("$V_{\parallel}$   (m/s)", fontsize=20)
         # plt.ylabel("$V_{\perp}$   (m/s)", fontsize=20)
@@ -65,30 +99,36 @@ class VDF:
 
         plt.show()
 
-    def VDF_3D_plot(
+    def plot_3D(self):
+
+        x, y, z, c = self.VDF_3D
+
+        mlab.contour3d(x, y, z, c)
+
+        mlab.show()
+
+    def find_3D(
             self,
+            v_par,
+            v_perp_x,
+            v_perp_y,
             core_fraction=0.8,
-            meshgrid_points=200j,
-            v_perp_min=-1e6,
-            v_perp_max=1e6,
-            v_par_min=-1e6,
-            v_par_max=1e6):
+            print_result=True):
 
-        # Let z be the direction parallel ot the field,
-        # and x, y perpendicular directions in plane perpendicular to the field
-        
-        x, y, z = np.ogrid[v_perp_min:v_perp_max:meshgrid_points,
-                           v_perp_min:v_perp_max:meshgrid_points,
-                           v_par_min:v_par_max:meshgrid_points]
-
-        core = self.BiMax_3D(z, x, y, 0, self.T_par, self.T_perp, core_fraction * self.n)
-        beam = self.BiMax_3D(z, x, y, self.V_A, self.T_par, self.T_perp, (1 - core_fraction) * self.n)
+        core = self.BiMax_3D(v_par, v_perp_x, v_perp_y,
+                             0, self.T_par, self.T_perp,
+                             core_fraction * self.n)
+        beam = self.BiMax_3D(v_par, v_perp_x, v_perp_y,
+                             self.V_A, self.T_par, self.T_perp,
+                             (1 - core_fraction) * self.n)
 
         c = core + beam
 
-        mlab.contour3d(c)
+        if print_result:
+            print(f'The distribution is equal to {c}')
 
-        mlab.show()
+        return c
+
 
     @staticmethod
     def BiMax_2D(v_par, v_perp, drift_v, T_par, T_perp, n):
@@ -122,4 +162,5 @@ parser.add_argument('-n', type=int, action=)"""
 
 if __name__ == '__main__':
     test = VDF()
-    test.VDF_3D_plot()
+    test.gen_3D()
+    test.plot_3D()
