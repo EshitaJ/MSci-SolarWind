@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import scipy.constants as cst
 from astropy import units as u
 from mayavi import mlab
+import rotate
 
 
 constants = {
@@ -19,6 +20,7 @@ class VDF:
     """
     @TODO:
         sort out argparse for running VDFs
+        consistency in labelling between rotate and here
     """
 
     def __init__(
@@ -40,6 +42,8 @@ class VDF:
 
         self.VDF_2D = None
         self.VDF_3D = None
+        self.VDF_2D_generated = False
+        self.VDF_3D_generated = False
 
     def gen_2D(self,
                core_fraction=0.8,
@@ -60,11 +64,12 @@ class VDF:
         c = core + beam
 
         self.VDF_2D = (x, y, c)
+        self.VDF_2D_generated = True
 
     def gen_3D(
             self,
             core_fraction=0.8,
-            meshgrid_points=10j,
+            meshgrid_points=5j,
             v_perp_min=-1e6,
             v_perp_max=1e6,
             v_par_min=-1e6,
@@ -76,7 +81,13 @@ class VDF:
                            v_perp_min:v_perp_max:meshgrid_points,
                            v_par_min:v_par_max:meshgrid_points]
 
-        print(x, y, z)
+        print('x', x)
+        print('y', y)
+        print('z', z)
+
+        print('cheese')
+
+        print(np.stack([x, y, z], axis=3)[0, 0, 1, :])
 
         core = self.BiMax_3D(z, x, y, 0, self.T_par, self.T_perp, core_fraction * self.n)
         beam = self.BiMax_3D(z, x, y, self.V_A, self.T_par, self.T_perp, (1 - core_fraction) * self.n)
@@ -86,8 +97,11 @@ class VDF:
         # print(c)
 
         self.VDF_3D = (x, y, z, c)
+        self.VDF_3D_generated = True
 
     def plot_2D(self):
+
+        assert self.VDF_2D_generated, "You need to generate the 2D VDF first via gen_2D()"
 
         x, y, c = self.VDF_2D
 
@@ -101,11 +115,42 @@ class VDF:
 
     def plot_3D(self):
 
+        assert self.VDF_3D_generated, "You need to generate the 3D VDF first via gen_3D()"
+
         x, y, z, c = self.VDF_3D
 
         mlab.contour3d(x, y, z, c)
 
         mlab.show()
+
+    def B_ecliptic_transformation(self,
+                                  sw_theta=np.pi/4,
+                                  sw_phi=np.pi/4,
+                                  core_B_speed=300000,
+                                  core_ecliptic_speed=None):
+
+        assert self.VDF_3D_generated, "You need to generate the 3D VDF first via gen_3D()"
+
+        if core_ecliptic_speed is None:
+            core_ecliptic_speed = np.array([0, 0, 0])
+
+        x, y, z, c = self.VDF_3D
+
+        z += core_B_speed
+
+        """
+        z, y, x = rotate.frame_rotation(z,
+                                        y,
+                                        x,
+                                        sw_theta=sw_theta,
+                                        sw_phi=sw_phi)
+
+        x += core_ecliptic_speed[0]
+        y += core_ecliptic_speed[1]
+        z += core_ecliptic_speed[2]
+
+        self.VDF_3D = (x, y, z, c)
+        """
 
     def find_3D(
             self,
@@ -114,6 +159,8 @@ class VDF:
             v_perp_y,
             core_fraction=0.8,
             print_result=True):
+
+        assert self.VDF_3D_generated, "You need to generate the 3D VDF first via gen_3D()"
 
         core = self.BiMax_3D(v_par, v_perp_x, v_perp_y,
                              0, self.T_par, self.T_perp,
@@ -163,4 +210,5 @@ parser.add_argument('-n', type=int, action=)"""
 if __name__ == '__main__':
     test = VDF()
     test.gen_3D()
+    test.B_ecliptic_transformation()
     test.plot_3D()

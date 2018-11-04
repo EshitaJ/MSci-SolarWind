@@ -37,13 +37,16 @@ def velocity_shift(x, y, z, dx, dy, dz):
     return x, y, z
 
 
-def frame_transform(x, y, z, direction='B-ecliptic', sw_theta=np.pi/4, sw_phi=0):
+def frame_rotation(x, y, z, direction='B-ecliptic', sw_theta=np.pi/4, sw_phi=0):
     # sw_phi defined as -ve if below ecliptic plane and +ve if above
+    # x = parallel to B, z up out of ecliptic plane, & y = perp to both as in RH rule
     if direction == 'B-ecliptic':
 
         if sw_phi is 0:
             x_rot, y_rot = x * math.cos(sw_theta) - y * math.sin(sw_theta),\
                            y * math.cos(sw_theta) + x * math.sin(sw_theta)
+
+            print(x_rot, y_rot)
 
         else:
 
@@ -61,13 +64,16 @@ def frame_transform(x, y, z, direction='B-ecliptic', sw_theta=np.pi/4, sw_phi=0)
                 rot_axis='z',
                 rot_angle=sw_theta)
 
-        print(x_rot, y_rot)
+            print(x_rot, y_rot, z_rot)
 
     elif direction == 'ecliptic-B':
 
         if sw_phi is 0:
             x_rot, y_rot = x * math.cos(-sw_theta) - y * math.sin(-sw_theta),\
                            y * math.cos(-sw_theta) + x * math.sin(-sw_theta)
+
+            print(x_rot, y_rot)
+
 
         else:
             x_theta, y_theta, z_theta = euler_rodrigues_intrinsic_rotation(
@@ -84,10 +90,11 @@ def frame_transform(x, y, z, direction='B-ecliptic', sw_theta=np.pi/4, sw_phi=0)
                 rot_axis='y',
                 rot_angle=sw_phi)
 
-        print(x_rot, y_rot)
+            print(x_rot, y_rot, z_rot)
 
 
 """
+# Code to extract the values of x, y, and z at individual points, rather than the 3 separate meshgrids of x, y, and z
 mesh = [x, y, z]
 points = zip(*[i.flat for i in mesh])
 """
@@ -95,4 +102,4 @@ points = zip(*[i.flat for i in mesh])
 if __name__ == '__main__':
     x=np.array([5, 7, 8])
     y=np.array([1, 12, 20])
-    frame_transform(x, y, 5)
+    frame_rotation(1, 0, 0, sw_theta=np.pi/4, sw_phi=np.pi/4)
