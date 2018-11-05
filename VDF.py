@@ -42,6 +42,8 @@ class VDF:
 
         self.VDF_2D = None
         self.VDF_3D = None
+        self.meshgrid_points_2D = None
+        self.meshgrid_points_3D = None
         self.VDF_2D_generated = False
         self.VDF_3D_generated = False
 
@@ -64,12 +66,13 @@ class VDF:
         c = core + beam
 
         self.VDF_2D = (x, y, c)
+        self.meshgrid_points_2D = meshgrid_points
         self.VDF_2D_generated = True
 
     def gen_3D(
             self,
             core_fraction=0.8,
-            meshgrid_points=5j,
+            meshgrid_points=50j,
             v_perp_min=-1e6,
             v_perp_max=1e6,
             v_par_min=-1e6,
@@ -81,13 +84,13 @@ class VDF:
                            v_perp_min:v_perp_max:meshgrid_points,
                            v_par_min:v_par_max:meshgrid_points]
 
-        print('x', x)
-        print('y', y)
-        print('z', z)
+        # print('x', x)
+        # print('y', y)
+        # print('z', z)
 
-        print('cheese')
+        # print('cheese')
 
-        print(np.stack([x, y, z], axis=3)[0, 0, 1, :])
+        # print(np.stack([x, y, z], axis=3)[0, 0, 1, :])
 
         core = self.BiMax_3D(z, x, y, 0, self.T_par, self.T_perp, core_fraction * self.n)
         beam = self.BiMax_3D(z, x, y, self.V_A, self.T_par, self.T_perp, (1 - core_fraction) * self.n)
@@ -97,6 +100,7 @@ class VDF:
         # print(c)
 
         self.VDF_3D = (x, y, z, c)
+        self.meshgrid_points_3D = meshgrid_points
         self.VDF_3D_generated = True
 
     def plot_2D(self):
@@ -125,7 +129,7 @@ class VDF:
 
     def B_ecliptic_transformation(self,
                                   sw_theta=np.pi/4,
-                                  sw_phi=np.pi/4,
+                                  sw_phi=0,
                                   core_B_speed=300000,
                                   core_ecliptic_speed=None):
 
@@ -138,19 +142,30 @@ class VDF:
 
         z += core_B_speed
 
-        """
-        z, y, x = rotate.frame_rotation(z,
-                                        y,
-                                        x,
-                                        sw_theta=sw_theta,
-                                        sw_phi=sw_phi)
+        stack = np.stack([z, y, x], axis=3)
+
+        for vz in range(int(abs(self.meshgrid_points_3D))):
+            for vy in range(int(abs(self.meshgrid_points_3D))):
+                for vx in range(int(abs(self.meshgrid_points_3D))):
+
+                    stack[vz, vy, vx, :] = rotate.frame_rotation(
+                        stack[vz, vy, vx, :][0],
+                        stack[vz, vy, vx, :][1],
+                        stack[vz, vy, vx, :][2],
+                        sw_theta=sw_theta,
+                        sw_phi=sw_phi)
+
+        z, y, x = np.split(stack, 3, axis=3)
+
+        x = np.squeeze(x)
+        y = np.squeeze(y)
+        z = np.squeeze(z)
 
         x += core_ecliptic_speed[0]
         y += core_ecliptic_speed[1]
         z += core_ecliptic_speed[2]
 
         self.VDF_3D = (x, y, z, c)
-        """
 
     def find_3D(
             self,
@@ -209,6 +224,6 @@ parser.add_argument('-n', type=int, action=)"""
 
 if __name__ == '__main__':
     test = VDF()
-    test.gen_3D()
+    test.gen_3D(meshgrid_points=100j)
     test.B_ecliptic_transformation()
     test.plot_3D()

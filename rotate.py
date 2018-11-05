@@ -41,56 +41,43 @@ def frame_rotation(x, y, z, direction='B-ecliptic', sw_theta=np.pi/4, sw_phi=0):
     # sw_phi defined as -ve if below ecliptic plane and +ve if above
     # x = parallel to B, z up out of ecliptic plane, & y = perp to both as in RH rule
     if direction == 'B-ecliptic':
+        x_phi, y_phi, z_phi = euler_rodrigues_intrinsic_rotation(
+            x,
+            y,
+            z,
+            rot_axis='y',
+            rot_angle=sw_phi)
 
-        if sw_phi is 0:
-            x_rot, y_rot = x * math.cos(sw_theta) - y * math.sin(sw_theta),\
-                           y * math.cos(sw_theta) + x * math.sin(sw_theta)
+        x_rot, y_rot, z_rot = euler_rodrigues_intrinsic_rotation(
+            x_phi,
+            y_phi,
+            z_phi,
+            rot_axis='z',
+            rot_angle=sw_theta)
 
-            print(x_rot, y_rot)
+        # print(x_rot, y_rot, z_rot)
 
-        else:
-
-            x_phi, y_phi, z_phi = euler_rodrigues_intrinsic_rotation(
-                x,
-                y,
-                z,
-                rot_axis='y',
-                rot_angle=sw_phi)
-
-            x_rot, y_rot, z_rot = euler_rodrigues_intrinsic_rotation(
-                x_phi,
-                y_phi,
-                z_phi,
-                rot_axis='z',
-                rot_angle=sw_theta)
-
-            print(x_rot, y_rot, z_rot)
+        return np.array([x_rot, y_rot, z_rot])
 
     elif direction == 'ecliptic-B':
+        x_theta, y_theta, z_theta = euler_rodrigues_intrinsic_rotation(
+            x,
+            y,
+            z,
+            rot_axis='z',
+            rot_angle=sw_theta)
 
-        if sw_phi is 0:
-            x_rot, y_rot = x * math.cos(-sw_theta) - y * math.sin(-sw_theta),\
-                           y * math.cos(-sw_theta) + x * math.sin(-sw_theta)
+        x_rot, y_rot, z_rot = euler_rodrigues_intrinsic_rotation(
+            x_theta,
+            y_theta,
+            z_theta,
+            rot_axis='y',
+            rot_angle=sw_phi)
 
-            print(x_rot, y_rot)
+        # print(x_rot, y_rot, z_rot)
 
+        return np.array([x_rot, y_rot, z_rot])
 
-        else:
-            x_theta, y_theta, z_theta = euler_rodrigues_intrinsic_rotation(
-                x,
-                y,
-                z,
-                rot_axis='z',
-                rot_angle=sw_theta)
-
-            x_rot, y_rot, z_rot = euler_rodrigues_intrinsic_rotation(
-                x_theta,
-                y_theta,
-                z_theta,
-                rot_axis='y',
-                rot_angle=sw_phi)
-
-            print(x_rot, y_rot, z_rot)
 
 
 """
