@@ -1,4 +1,4 @@
-import argparse
+atomimport argparse
 import plasmapy
 import numpy as np
 import matplotlib.pyplot as plt
@@ -85,7 +85,8 @@ class VDF:
             v_perp_min=-1e5,
             v_perp_max=1e5,
             v_par_min=-1e5,
-            v_par_max=1e5):
+            v_par_ma_axis='z', rot_angle=np.pi/4):
+    assert rot_axis in ['x', 'y', 'z'], "This is not a valid intrix=1e5):
 
         # Let z be the direction parallel to the field,
         # and x, y perpendicular directions in plane perpendicular to the field
@@ -115,7 +116,8 @@ class VDF:
 
     @staticmethod
     def BiMax_2D(x, y, v, n):
-        T_x = constants["T_x"]  # K
+        T_x = consta_axis='z', rot_angle=np.pi/4):
+    assert rot_axis in ['x', 'y', 'z'], "This is not a valid intrints["T_x"]  # K
         T_y = constants["T_y"]
         norm = n * cst.m_p/(2 * np.pi * cst.k) / np.sqrt(T_x * T_y)
         exponent = -(((x-v)**2/T_x) + (y**2/T_y)) * (cst.m_p/(2 * cst.k))
