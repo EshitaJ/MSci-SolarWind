@@ -1,11 +1,13 @@
 import argparse
 import plasmapy
+import math
 import numpy as np
+from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 import scipy.constants as cst
 from astropy import units as u
-from mayavi import mlab
-import rotate
+# from mayavi import mlab
+import rotate2
 
 
 constants = {
@@ -42,8 +44,15 @@ class VDF:
 
         self.VDF_2D = None
         self.VDF_3D = None
+
         self.meshgrid_points_2D = None
         self.meshgrid_points_3D = None
+
+        self.v_perp_min_3D = None
+        self.v_perp_max_3D = None
+        self.v_par_min_3D = None
+        self.v_par_max_3D = None
+
         self.VDF_2D_generated = False
         self.VDF_3D_generated = False
 
@@ -55,11 +64,11 @@ class VDF:
                v_par_min=-1e6,
                v_par_max=1e6):
 
-        vperp = np.linspace(v_perp_min, v_perp_max, meshgrid_points)
-        vpar = np.linspace(v_par_min, v_par_max, meshgrid_points)
+        # vperp = np.linspace(v_perp_min, v_perp_max, meshgrid_points)
+        # vpar = np.linspace(v_par_min, v_par_max, meshgrid_points)
 
-        x, y = np.meshgrid(vperp, vpar)
-
+        x, y = np.mgrid[v_perp_min:v_perp_max:meshgrid_points, v_par_min:v_par_max:meshgrid_points]
+        print(x, y)
         core = self.BiMax_2D(x, y, 0, self.T_par, self.T_perp, core_fraction*self.n)
         beam = self.BiMax_2D(x, y, self.V_A, self.T_par, self.T_perp, (1-core_fraction)*self.n)
 
@@ -72,7 +81,7 @@ class VDF:
     def gen_3D(
             self,
             core_fraction=0.8,
-            meshgrid_points=50j,
+            meshgrid_points=50,
             v_perp_min=-1e6,
             v_perp_max=1e6,
             v_par_min=-1e6,
@@ -80,9 +89,19 @@ class VDF:
         # Let z be the direction parallel ot the field,
         # and x, y perpendicular directions in plane perpendicular to the field
 
+        self.meshgrid_points_3D = meshgrid_points
+        meshgrid_points = meshgrid_points * 1j
+
         x, y, z = np.mgrid[v_perp_min:v_perp_max:meshgrid_points,
                            v_perp_min:v_perp_max:meshgrid_points,
                            v_par_min:v_par_max:meshgrid_points]
+
+        self.v_perp_min_3D = v_perp_min
+        self.v_perp_max_3D = v_perp_max
+        self.v_par_min_3D = v_par_min
+        self.v_par_max_3D = v_par_max
+
+        # print(x, y, z)
 
         # print('x', x)
         # print('y', y)
@@ -98,9 +117,13 @@ class VDF:
         c = core + beam
 
         # print(c)
+        # print(x)
+        # print(y)
+        # print(z)
+
+        y += 3e5
 
         self.VDF_3D = (x, y, z, c)
-        self.meshgrid_points_3D = meshgrid_points
         self.VDF_3D_generated = True
 
     def plot_2D(self):
@@ -117,6 +140,7 @@ class VDF:
 
         plt.show()
 
+    """
     def plot_3D(self):
 
         assert self.VDF_3D_generated, "You need to generate the 3D VDF first via gen_3D()"
@@ -126,11 +150,53 @@ class VDF:
         mlab.contour3d(x, y, z, c)
 
         mlab.show()
+    """
+
+    def plot_axis(self, axis, value):
+
+        assert self.VDF_3D_generated, "You need to generate the 3D VDF first via gen_3D()"
+        assert axis in ['x', 'y', 'z'], "This is not a valid axis to plot along"
+
+        x, y, z, c = self.VDF_3D
+
+        meshgrid_points = self.meshgrid_points_3D
+        print(meshgrid_points)
+        min_value = min(self.v_perp_min_3D, self.v_par_min_3D)
+        max_value = max(self.v_perp_max_3D, self.v_par_max_3D)
+        width = (max_value - min_value) / (meshgrid_points - 1)
+
+        if axis == 'x':
+            index = np.where((x > value - width/2) & (x <= value + width/2))
+            ax = plt.axes(projection='3d')
+            ax.plot_trisurf(y[index], z[index], c[index],
+                            cmap='viridis', edgecolor='none')
+            plt.xlabel('y')
+            plt.ylabel('z')
+            # plt.clabel(C, inline=1, fontsize=10)
+
+        elif axis == 'y':
+            index = np.where((y > value - width/2) & (y <= value + width/2))
+            ax = plt.axes(projection='3d')
+            ax.plot_trisurf(x[index], z[index], c[index],
+                            cmap='viridis', edgecolor='none')
+            plt.xlabel('x')
+            plt.ylabel('z')
+
+        else:
+            index = np.where((z > value - width / 2) & (z <= value + width / 2))
+            ax = plt.axes(projection='3d')
+            ax.plot_trisurf(x[index], y[index], c[index],
+                            cmap='viridis', edgecolor='none')
+            plt.xlabel('x')
+            plt.ylabel('y')
+
+        plt.show()
 
     def B_ecliptic_transformation(self,
-                                  sw_theta=np.pi/4,
-                                  sw_phi=0,
-                                  core_B_speed=300000,
+                                  phi,
+                                  theta,
+                                  psi=0,
+                                  core_b_speed=None,
                                   core_ecliptic_speed=None):
 
         assert self.VDF_3D_generated, "You need to generate the 3D VDF first via gen_3D()"
@@ -138,34 +204,46 @@ class VDF:
         if core_ecliptic_speed is None:
             core_ecliptic_speed = np.array([0, 0, 0])
 
+        if core_b_speed is None:
+            core_b_speed = np.array([0, 0, 0])
+
         x, y, z, c = self.VDF_3D
 
-        z += core_B_speed
+        # x += core_b_speed[0]
+        # y += core_b_speed[1]
+        # z += core_b_speed[2]
 
-        stack = np.stack([z, y, x], axis=3)
+        stack = np.stack([x, y, z], axis=3)
 
-        for vz in range(int(abs(self.meshgrid_points_3D))):
+        new_x_axis, new_y_axis, new_z_axis = rotate2.b_ecliptic_coordinate_transform(
+            phi=phi,
+            theta=theta,
+            psi=psi)
+
+        for vx in range(int(abs(self.meshgrid_points_3D))):
             for vy in range(int(abs(self.meshgrid_points_3D))):
-                for vx in range(int(abs(self.meshgrid_points_3D))):
+                for vz in range(int(abs(self.meshgrid_points_3D))):
+                    # print(stack[vx, vy, vz, :])
+                    # print(stack[vx, vy, vz, :])
+                    # print(np.array(new_x_axis))
+                    stack[vx, vy, vz, :] = np.array([np.dot(stack[vx, vy, vz, :], new_x_axis),
+                                                     np.dot(stack[vx, vy, vz, :], new_y_axis),
+                                                     np.dot(stack[vx, vy, vz, :], new_z_axis)])
 
-                    stack[vz, vy, vx, :] = rotate.frame_rotation(
-                        stack[vz, vy, vx, :][0],
-                        stack[vz, vy, vx, :][1],
-                        stack[vz, vy, vx, :][2],
-                        sw_theta=sw_theta,
-                        sw_phi=sw_phi)
+                    # print(stack[vx, vy, vz, :])
 
-        z, y, x = np.split(stack, 3, axis=3)
 
-        x = np.squeeze(x)
-        y = np.squeeze(y)
-        z = np.squeeze(z)
+        newx, newy, newz = np.split(stack, 3, axis=3)
 
-        x += core_ecliptic_speed[0]
-        y += core_ecliptic_speed[1]
-        z += core_ecliptic_speed[2]
+        newx = np.squeeze(newx)
+        newy = np.squeeze(newy)
+        newz = np.squeeze(newz)
 
-        self.VDF_3D = (x, y, z, c)
+        newx += core_ecliptic_speed[0]
+        newy += core_ecliptic_speed[1]
+        newz += core_ecliptic_speed[2]
+
+        self.VDF_3D = (newx, newy, newz, c)
 
     def find_3D(
             self,
@@ -223,7 +301,16 @@ class VDF:
 parser.add_argument('-n', type=int, action=)"""
 
 if __name__ == '__main__':
+    meshgrid_points = 50
     test = VDF()
-    test.gen_3D(meshgrid_points=100j)
-    test.B_ecliptic_transformation()
-    test.plot_3D()
+    # test.gen_2D(meshgrid_points=50j)
+    # test.plot_2D()
+    test.gen_3D(meshgrid_points=meshgrid_points, v_perp_min=-5e5, v_perp_max=5e5, v_par_min=-5e5, v_par_max=5e5)
+    test.plot_axis(axis='x', value=0)
+    test.plot_axis(axis='y', value=0)
+    test.plot_axis(axis='z', value=0)
+    test.B_ecliptic_transformation(phi=np.pi/2, theta=0, psi=0)
+    test.plot_axis(axis='x', value=0)
+    test.plot_axis(axis='y', value=0)
+    test.plot_axis(axis='z', value=0)
+
