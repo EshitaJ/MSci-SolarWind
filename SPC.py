@@ -14,8 +14,8 @@ def V_A(B, n):
         ion="p+")) / (u.m / u.s)
 
 
-Fractional = False
-Plotting = True
+Fractional = True
+Plotting = False
 
 va = 245531.8
 start = timeit.default_timer()
@@ -59,12 +59,12 @@ if Fractional:
                       args=(va, constants["n"], 4))
     stop1 = timeit.default_timer()
 
-    print("V_k: ", V_k[0], I_k[0])  # -1e-17  # (U-D)/(U+D)
-    print("W_k: ", W_k[0], I_k[0])  # -1e-17  # (L-R)/(L+R)
-    print("A_k: ", A_k[0]/I_k[0])  # 0.58 # U,R
-    print("B_k: ", B_k[0]/I_k[0])  # 0.258  # U,L
-    print("C_k: ", C_k[0]/I_k[0])  # 0.258  # D,L
-    print("D_k: ", D_k[0]/I_k[0])  # 1.55  # D,R
+    print("V_k: ", V_k[0]/I_k[0])  # 0.0 (smaller than 1e-200) # (U-D)/(U+D)
+    print("W_k: ", W_k[0]/I_k[0])  # 0.0  # (L-R)/(L+R)
+    print("A_k: ", A_k[0]/I_k[0])  # 0.249999997 # U,R
+    print("B_k: ", B_k[0]/I_k[0])  # 0.249999997  # U,L
+    print("C_k: ", C_k[0]/I_k[0])  # 0.249999997  # D,L
+    print("D_k: ", D_k[0]/I_k[0])  # 0.249999997  # D,R
     print("Temperature: ", constants["T_z"])
     print("time taken: ", stop1-start, "s")
 
