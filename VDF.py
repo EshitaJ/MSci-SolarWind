@@ -6,7 +6,6 @@ from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 import scipy.constants as cst
 from astropy import units as u
-# from mayavi import mlab
 import rotate2
 
 
@@ -192,6 +191,32 @@ class VDF:
 
         plt.show()
 
+    def rotate3d(self, x, y, z, phi, theta, psi):
+
+        assert self.VDF_3D_generated, "You need to generate the 3D VDF first via gen_3D()"
+
+        stack = np.stack([x, y, z], axis=3)
+
+        new_x_axis, new_y_axis, new_z_axis = rotate2.b_ecliptic_coordinate_transform(
+            phi=phi,
+            theta=theta,
+            psi=psi)
+
+        for vx in range(int(abs(self.meshgrid_points_3D))):
+            for vy in range(int(abs(self.meshgrid_points_3D))):
+                for vz in range(int(abs(self.meshgrid_points_3D))):
+                    stack[vx, vy, vz, :] = np.array([np.dot(stack[vx, vy, vz, :], new_x_axis),
+                                                     np.dot(stack[vx, vy, vz, :], new_y_axis),
+                                                     np.dot(stack[vx, vy, vz, :], new_z_axis)])
+
+        new_x, new_y, new_z = np.split(stack, 3, axis=3)
+
+        new_x = np.squeeze(new_x)
+        new_y = np.squeeze(new_y)
+        new_z = np.squeeze(new_z)
+
+        return new_x, new_y, new_z
+
     def B_ecliptic_transformation(self,
                                   phi,
                                   theta,
@@ -209,41 +234,17 @@ class VDF:
 
         x, y, z, c = self.VDF_3D
 
-        # x += core_b_speed[0]
-        # y += core_b_speed[1]
-        # z += core_b_speed[2]
+        x += core_b_speed[0]
+        y += core_b_speed[1]
+        z += core_b_speed[2]
 
-        stack = np.stack([x, y, z], axis=3)
+        new_x, new_y, new_z = self.rotate3d(x, y, z, phi, theta, psi)
 
-        new_x_axis, new_y_axis, new_z_axis = rotate2.b_ecliptic_coordinate_transform(
-            phi=phi,
-            theta=theta,
-            psi=psi)
+        new_x += core_ecliptic_speed[0]
+        new_y += core_ecliptic_speed[1]
+        new_z += core_ecliptic_speed[2]
 
-        for vx in range(int(abs(self.meshgrid_points_3D))):
-            for vy in range(int(abs(self.meshgrid_points_3D))):
-                for vz in range(int(abs(self.meshgrid_points_3D))):
-                    # print(stack[vx, vy, vz, :])
-                    # print(stack[vx, vy, vz, :])
-                    # print(np.array(new_x_axis))
-                    stack[vx, vy, vz, :] = np.array([np.dot(stack[vx, vy, vz, :], new_x_axis),
-                                                     np.dot(stack[vx, vy, vz, :], new_y_axis),
-                                                     np.dot(stack[vx, vy, vz, :], new_z_axis)])
-
-                    # print(stack[vx, vy, vz, :])
-
-
-        newx, newy, newz = np.split(stack, 3, axis=3)
-
-        newx = np.squeeze(newx)
-        newy = np.squeeze(newy)
-        newz = np.squeeze(newz)
-
-        newx += core_ecliptic_speed[0]
-        newy += core_ecliptic_speed[1]
-        newz += core_ecliptic_speed[2]
-
-        self.VDF_3D = (newx, newy, newz, c)
+        self.VDF_3D = (new_x, new_y, new_z, c)
 
     def find_3D(
             self,
