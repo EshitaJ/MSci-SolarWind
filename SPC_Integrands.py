@@ -3,7 +3,11 @@ from SPC_Plot import *
 
 
 def integrand_I(vz, vy, vx, v, n):
-    vdf = BiMax(vz, vy, vx, v, True, n) + BiMax(vz, vy, vx, v, False, n)
+    # core = rotatedMW(vz, vy, vx, v, True, n, B0)
+    # beam = rotatedMW(vz, vy, vx, v, False, n, B0)
+    core = BiMax(vz, vy, vx, v, True, n)
+    beam = BiMax(vz, vy, vx, v, False, n)
+    vdf = core + beam
     return cst.e * np.sqrt(vz**2 + vy**2 + vx**2) * Area(vz, vy, vx) * vdf
 
 

@@ -5,19 +5,9 @@ from SPC_Plot import *
 from SPC_Plates import *
 from SPC_Integrands import *
 
+Fractional = False
+Plotting = True
 
-def V_A(B, n):
-    """Returns Alfven speed"""
-    return (plasmapy.physics.parameters.Alfven_speed(
-        B*u.T,
-        n*u.m**-3,
-        ion="p+")) / (u.m / u.s)
-
-
-Fractional = True
-Plotting = False
-
-va = 245531.8
 start = timeit.default_timer()
 
 # Current in the Faraday cup in a given velocity band
@@ -37,45 +27,43 @@ if Fractional:
                       lambda x: -lim, lambda x: lim,
                       lambda x, y: band_low, lambda x, y: band_high,
                       args=(va, constants["n"]))
-    A_k = spi.tplquad(integrand_plate,
-                      -lim, lim,
-                      lambda x: -lim, lambda x: lim,
-                      lambda x, y: band_low, lambda x, y: band_high,
-                      args=(va, constants["n"], 1))
-    B_k = spi.tplquad(integrand_plate,
-                      -lim, lim,
-                      lambda x: -lim, lambda x: lim,
-                      lambda x, y: band_low, lambda x, y: band_high,
-                      args=(va, constants["n"], 2))
-    C_k = spi.tplquad(integrand_plate,
-                      -lim, lim,
-                      lambda x: -lim, lambda x: lim,
-                      lambda x, y: band_low, lambda x, y: band_high,
-                      args=(va, constants["n"], 3))
-    D_k = spi.tplquad(integrand_plate,
-                      -lim, lim,
-                      lambda x: -lim, lambda x: lim,
-                      lambda x, y: band_low, lambda x, y: band_high,
-                      args=(va, constants["n"], 4))
+    Quadrant1 = spi.tplquad(integrand_plate,
+                            -lim, lim,
+                            lambda x: -lim, lambda x: lim,
+                            lambda x, y: band_low, lambda x, y: band_high,
+                            args=(va, constants["n"], 1))
+    Quadrant2 = spi.tplquad(integrand_plate,
+                            -lim, lim,
+                            lambda x: -lim, lambda x: lim,
+                            lambda x, y: band_low, lambda x, y: band_high,
+                            args=(va, constants["n"], 2))
+    Quadrant3 = spi.tplquad(integrand_plate,
+                            -lim, lim,
+                            lambda x: -lim, lambda x: lim,
+                            lambda x, y: band_low, lambda x, y: band_high,
+                            args=(va, constants["n"], 3))
+    Quadrant4 = spi.tplquad(integrand_plate,
+                            -lim, lim,
+                            lambda x: -lim, lambda x: lim,
+                            lambda x, y: band_low, lambda x, y: band_high,
+                            args=(va, constants["n"], 4))
     stop1 = timeit.default_timer()
 
     print("V_k: ", V_k[0]/I_k[0])  # 0.0 (smaller than 1e-200) # (U-D)/(U+D)
     print("W_k: ", W_k[0]/I_k[0])  # 0.0  # (L-R)/(L+R)
-    print("A_k: ", A_k[0]/I_k[0])  # 0.249999997 # U,R
-    print("B_k: ", B_k[0]/I_k[0])  # 0.249999997  # U,L
-    print("C_k: ", C_k[0]/I_k[0])  # 0.249999997  # D,L
-    print("D_k: ", D_k[0]/I_k[0])  # 0.249999997  # D,R
+    print("Quadrant1: ", Quadrant1[0]/I_k[0])  # 0.249999997 # U,R
+    print("Quadrant2: ", Quadrant2[0]/I_k[0])  # 0.249999997  # U,L
+    print("Quadrant3: ", Quadrant3[0]/I_k[0])  # 0.249999997  # D,L
+    print("Quadrant4: ", Quadrant4[0]/I_k[0])  # 0.249999997  # D,R
+    print("Norm: ",
+          ((Quadrant1[0]+Quadrant2[0]+Quadrant3[0]+Quadrant4[0])/I_k[0]))
     print("Temperature: ", constants["T_z"])
     print("time taken: ", stop1-start, "s")
 
 if Plotting:
-    Plot(True, 700, 450)
-    Plot(False, 940, 450)
+    Plot(True, True, True, 700, 950, 290)
+    # Plot(True, False, False, 700, 950, 290)
 
     stop = timeit.default_timer()
     print("time taken: ", stop-start, "s")
-
-    plt.legend()
-    plt.xlabel(r"$V_z\ \rm{(km/s)}$")
-    plt.ylabel("Current (nA)")
     plt.show()
