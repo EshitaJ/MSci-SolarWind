@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import seaborn as sns
+import peakutils
 import scipy.optimize as spo
 import matplotlib.pyplot as plt
 import scipy.integrate as spi
@@ -15,7 +16,9 @@ constants = {
     "B": 108e-9  # T
 }
 
-B0 = np.array([0, 0, constants["B"]])
+B = constants["B"]
+B0 = np.array([0, 0, B])  # B field in SC frame
+v_sc = np.array([0, 0, 20000])  # PSP velocity in m/s
 print("B: ", B0)
 va = np.linalg.norm(B0) / np.sqrt(cst.mu_0 * constants["n"] * cst.m_p)
 print("V_alf: ", va)
@@ -37,7 +40,8 @@ def H(theta):
 
 
 def BiMax(z, y, x, v, is_core, n):
-    """Just call it from VDF later"""
+    """3D Bi-Maxwellian distribution;
+    Well defined only in the B field frame, with main axis = B_z"""
     T_x = constants["T_x"]  # K
     T_y = constants["T_y"]
     T_z = constants["T_z"]
@@ -49,13 +53,11 @@ def BiMax(z, y, x, v, is_core, n):
     else:
         n_p = (1 - core_fraction) * n
         z_new = z - v - 700000
-    # print("z,y,x: ", z_new, y, x)
-    # print("v: ", v)
+
     norm = n_p * (cst.m_p/(2 * np.pi * cst.k))**1.5 / np.sqrt(T_x * T_y * T_z)
     exponent = -((z_new**2/T_z) + (y**2/T_y) + (x**2/T_x)) \
         * (cst.m_p/(2 * cst.k))
     vdf = norm * np.exp(exponent)
-    # print("vdf: ", vdf, norm, np.exp(exponent), exponent)
     return vdf
 
 
@@ -75,34 +77,39 @@ def Area(vz, vy, vx):
 
 
 def rotationmatrix(B, z_axis):
-    """B and z are 3D row vectors"""
+    """Rotation matrix given according to Rodriugues' rotation formula
+    for rotation by a given angle around a given axis;
+    B and z are 3D row vectors;
+    Either rotate B(VDF) onto z(SPC) or vice versa"""
     B = B / np.linalg.norm(B)
     z = z_axis / np.linalg.norm(z_axis)
-
     rot_vector = np.cross(B, z)
+    # print(B, z, rot_vector)
     if np.linalg.norm(rot_vector) != 0:
         rot_axis = rot_vector / np.linalg.norm(rot_vector)
-        rot_angle = np.dot(B, z)
+        cos_angle = np.dot(B, z)  # B and z are normalised
+        # print("Axis, angle: ", rot_axis, cos_angle)
         cross_axis = np.array(([0, -rot_axis[2], rot_axis[1]],
                               [rot_axis[2], 0, -rot_axis[0]],
                               [-rot_axis[1], rot_axis[0], 0]))
         outer_axis = np.outer(rot_axis, rot_axis)
-        R = np.identity(3)*rot_angle + cross_axis*np.sqrt(1 - rot_angle**2) \
-            + (1 - rot_angle)*outer_axis
+        R = np.identity(3)*cos_angle + cross_axis*np.sqrt(1 - cos_angle**2) \
+            + (1 - cos_angle)*outer_axis
     elif np.dot(B, z) > 0:
         # B and z parallel
         R = np.identity(3)
     else:
         # B and z anti-parallel
         R = -np.identity(3)
+    # print(R)
     return R
 
 
 def rotatedMW(vz, vy, vx, v, is_core, n, B):
     R = rotationmatrix(B, np.array([0, 0, 1]))
-    vel = np.array([vx, vy, vz])
-    Vx, Vy, Vz = np.dot(R, vel)
-    DF = BiMax(Vz, Vy, Vx, v, is_core, n)
+    vel = np.array([vx, vy, vz])  # in SPC frame
+    Vx, Vy, Vz = np.dot(R, vel) - v_sc  # in B frame, where VDF is well-defined
+    DF = BiMax(Vz, Vy, Vx, v, is_core, n)  # -V because 'look angle'
     return DF
 
 
@@ -152,7 +159,7 @@ def FWHM(E_plot, is_core, x_axis, data, fit_array, mu_guess, variance_guess):
     def fit_func(x, variance, mu, N):
         """1D maxwellian fit"""
         if E_plot:
-            return N * x**0.25 \
+            return N \
                 * np.exp(-(np.sqrt(x) - np.sqrt(mu))**2 / variance)
         else:
             return N * np.exp(-(x - mu)**2 / variance)
@@ -165,11 +172,13 @@ def FWHM(E_plot, is_core, x_axis, data, fit_array, mu_guess, variance_guess):
         def new_fit(x):
             return fit_func(x, *p) - (fit_func(p[1], *p) / 2.)
 
+        print(*p)
         x1 = 2000 if is_core else 4000  # estimates of zeros for core and beam
-        x2 = 3000 if is_core else 5500
+        x2 = 3000 if is_core else 5000
         zeros = spo.root(new_fit, [x1, x2])
         print(zeros.x)
         fwhm = zeros.x[1] - zeros.x[0]
+        # fwhm = (2 * p[0] * np.log(2))**2
 
     else:
 
@@ -201,39 +210,78 @@ def Total_Fit(E_plot, x_axis, data, fit_array,
 
     p, c = spo.curve_fit(fit_func, x_axis, data,
                          p0=(variance_guess, mu1_guess, mu2_guess,
-                             0.01, 0.01))
+                             0.09, 0.01))
+
+    func = fit_func(fit_array, *p)
+    plt.plot(fit_array, func, 'k', linewidth=3,
+             label="Best Bi-Maxwellian fit")
+
+    # fitting individual gaussians around core and beam peaks
+    indexes = peakutils.indexes(func, thres=0.001, min_dist=1)
+    peak1 = indexes[0]
+    peak2 = indexes[1]
 
     if E_plot:
-        def new_fit(x):
-            return fit_func(x, *p) - (fit_func(p[1], *p) / 2.)
-        x1 = 2000  # if is_core else 4000
-        x2 = 3000  # if is_core else 5500
-        zeros = spo.root(new_fit, [x1, x2])
-        print(zeros.x)
-        fwhm = zeros.x[1] - zeros.x[0]
+        fit_array1 = np.sqrt(fit_array)
     else:
-        fwhm = 2 * np.sqrt(p[0] * np.log(2))
+        fit_array1 = fit_array
 
-    plt.plot(fit_array, fit_func(fit_array, *p),
-             label="Best Bi-Maxwellian fit, (FWHM = %g %s)"
-             % (fwhm, "eV" if E_plot else "km/s"))
-    return fwhm
+    parameters1 = peakutils.gaussian_fit(fit_array1[peak1-10:peak1+10],
+                                         func[peak1-10:peak1+10],
+                                         center_only=False)
+    parameters2 = peakutils.gaussian_fit(fit_array1[peak2-10:peak2+10],
+                                         func[peak2-10:peak2+10],
+                                         center_only=False)
+    fit1 = peakutils.gaussian(fit_array1, *parameters1)
+    fit2 = peakutils.gaussian(fit_array1, *parameters2)
+
+    def f1(x):
+        if E_plot:
+            x = np.sqrt(x)
+        return peakutils.gaussian(x, *parameters1) \
+            - (peakutils.gaussian(parameters1[1], *parameters1))/2.
+
+    def f2(x):
+        if E_plot:
+            x = np.sqrt(x)
+        return peakutils.gaussian(x, *parameters2) \
+            - (peakutils.gaussian(parameters2[1], *parameters2))/2.
+
+    x1 = 2000 if E_plot else 600  # estimates of zeros for core and beam
+    x2 = 3000 if E_plot else 800
+    x3 = 4000 if E_plot else 850
+    x4 = 5000 if E_plot else 1000
+    zeros1 = spo.root(f1, [x1, x2])
+    zeros2 = spo.root(f2, [x3, x4])
+    print("1: ", zeros1.x[0], zeros1.x[1])
+    print("2: ", zeros2.x[0], zeros2.x[1])
+    fwhm1 = zeros1.x[1] - zeros1.x[0]
+    fwhm2 = zeros2.x[1] - zeros2.x[0]
+
+    plt.plot(fit_array, fit1, 'r--',
+             label="Best Gaussian core fit (FWHM = %g %s)"
+             % (fwhm1, "eV" if E_plot else "km/s"))
+    plt.plot(fit_array, fit2, 'g--',
+             label="Best Gaussian beam fit (FWHM = %g %s)"
+             % (fwhm2, "eV" if E_plot else "km/s"))
+
+    return fwhm1, fwhm2
 
 
 def Plot(E_plot, plot_total, is_core,
          mu1_guess, mu2_guess, variance_guess, num=50):
-    """ > E_plot=True plots current against Energy, and otherwise plots
+    """ @ E_plot=True plots current against Energy, and otherwise plots
     current against z-velocity;
-    > plot_total=True plots the total core+beam vdf with a bi-max fit,
+    @ plot_total=True plots the total core+beam vdf with a bi-max fit,
     and otherwise plots and fits either core or beam vdf
     (function needs to be called once for core and once for beam if =False);
-    > is_core=True (relevant iff plot_total=False) calculates and plots core,
+    @ is_core=True (relevant iff plot_total=False) calculates and plots core,
     and otherwise beam;
-    > mu1_guess and mu2_guess are used as estimates of
+    @ mu1_guess and mu2_guess are used as estimates of
     core and beam peaks respectively for fitting;
-    > variance_guess is estimate of variance for fitting (for now,
+    @ variance_guess is estimate of variance for fitting (for now,
     assume core and beam distributions have same width)
-    > num is number of bins, default is set to 50
+    @ num is number of bins, default is set to 50
     """
 
     # unequal bin widths in velocity as potential is what is varied
