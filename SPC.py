@@ -4,9 +4,8 @@ from astropy import units as u
 from SPC_Plot import *
 from SPC_Plates import *
 from SPC_Integrands import *
-import pandas as pd
 
-Fractional = False
+Fractional = True
 Plotting = False
 
 start = timeit.default_timer()
@@ -50,8 +49,9 @@ if Fractional:
                             args=(va, constants["n"], 4))
     stop1 = timeit.default_timer()
 
-    print("V_k: ", V_k[0]/I_k[0])  # 0.0 (smaller than 1e-200) # (U-D)/(U+D)
-    print("W_k: ", W_k[0]/I_k[0])  # 0.0  # (L-R)/(L+R)
+    print("I_k: ", I_k[0] * 1e9, "nA")
+    print("V_k: ", V_k[0], (I_k[0] * 1e9))  # 0.0  # (U-D)/(U+D)
+    print("W_k: ", W_k[0], (I_k[0] * 1e9))  # 0.0  # (L-R)/(L+R)
     print("Quadrant1: ", Quadrant1[0]/I_k[0])  # 0.249999997 # U,R
     print("Quadrant2: ", Quadrant2[0]/I_k[0])  # 0.249999997  # U,L
     print("Quadrant3: ", Quadrant3[0]/I_k[0])  # 0.249999997  # D,L
@@ -74,25 +74,29 @@ if Plotting:
 
 
 def RBM(x, y):
-    core = rotatedMW(700, y, x, 0, True, constants["n"], B0)
-    # beam = rotatedMW(0, y, x, va, False, constants["n"], B0)
-    return core
+    core = rotatedMW(700000+va, y, x, 0, True, constants["n"], B0)
+    beam = rotatedMW(700000+va, y, x, va, False, constants["n"], B0)
+    return core + beam
 
 
 def BM(x, y):
-    core = BiMax(700, y, x, 0, True, constants["n"])
+    core = BiMax(700000, y, x, 0, True, constants["n"])
     # beam = BiMax(0, y, x, 2*va, False, constants["n"])
     return core
 
 
-lim1 = 1e6
-x = np.linspace(-lim1, lim1, 100)
-y = np.linspace(-lim1, lim1, 100)
-X, Y = np.meshgrid(x, y)  # SC frame
-Z = RBM(X, Y)
-plt.contour(X/1e3, Y/1e3, Z)
-plt.xlabel("$V_x$ (km/s)")
-plt.ylabel("$V_y$ (km/s)")
-stop = timeit.default_timer()
-print("time taken: ", stop-start, "s")
-plt.show()
+# lim1 = 1e6
+# x = np.linspace(-lim1, lim1, 100)
+# y = np.linspace(-lim1, lim1, 100)
+# X, Y = np.meshgrid(x, y)  # SC frame
+# Z = RBM(X, Y)  # B frame
+#
+# plt.contour(X/1e3, Y/1e3, Z)
+# plt.xlabel("$V_x$ (km/s)")
+# plt.ylabel("$V_y$ (km/s)")
+# plt.quiver(B0[0], B0[1])
+#
+# stop = timeit.default_timer()
+# print("time taken: ", stop-start, "s")
+
+# plt.show()
