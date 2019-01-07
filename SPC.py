@@ -5,8 +5,8 @@ from SPC_Plot import *
 from SPC_Plates import *
 from SPC_Integrands import *
 
-Fractional = True
-Plotting = False
+Fractional = False
+Plotting = True
 
 start = timeit.default_timer()
 
@@ -85,18 +85,20 @@ def BM(x, y):
     return core
 
 
-# lim1 = 1e6
-# x = np.linspace(-lim1, lim1, 100)
-# y = np.linspace(-lim1, lim1, 100)
-# X, Y = np.meshgrid(x, y)  # SC frame
-# Z = RBM(X, Y)  # B frame
-#
-# plt.contour(X/1e3, Y/1e3, Z)
-# plt.xlabel("$V_x$ (km/s)")
-# plt.ylabel("$V_y$ (km/s)")
-# plt.quiver(B0[0], B0[1])
-#
-# stop = timeit.default_timer()
-# print("time taken: ", stop-start, "s")
+if __name__ == '__main__':
 
-# plt.show()
+    lim1 = 1e6
+    x = np.linspace(-lim1, lim1, 100)
+    y = np.linspace(-lim1, lim1, 100)
+    X, Y = np.meshgrid(x, y)  # SC frame
+    Z = RBM(X, Y)  # B frame
+
+    plt.contour(X/1e3, Y/1e3, Z)
+    plt.xlabel("$V_x$ (km/s)")
+    plt.ylabel("$V_y$ (km/s)")
+    plt.quiver(B0[0], B0[1])
+
+    stop = timeit.default_timer()
+    print("time taken: ", stop-start, "s")
+
+    plt.show()

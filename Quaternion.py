@@ -1,5 +1,6 @@
 import numpy as np
 import quaternion as quat
+import timeit
 
 
 def rotate(vector, B, z_axis):
@@ -14,7 +15,6 @@ def rotate(vector, B, z_axis):
 
     if np.linalg.norm(rot_vector) != 0:
         # Iff B and z neither parallel nor anti-parallel
-
         vec = np.array([0.] + vector)
         # print(vec)
         axis = np.array([0.] + rot_vector)
@@ -23,7 +23,6 @@ def rotate(vector, B, z_axis):
         rot_angle = np.arccos(np.dot(B, z))  # B and z are normalised
         # print("angle: ", rot_angle)
         axis_angle = (rot_angle*0.5) * rot_axis
-
         v = quat.quaternion(*vec)
         exponent = quat.quaternion(*axis_angle)
         q = np.exp(exponent)

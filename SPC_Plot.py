@@ -13,22 +13,32 @@ sns.set()
 
 def current_vdensity(vz, vy, vx, v, is_core, n):
     # df = BiMax(vz, vy, vx, v, is_core, n)
-    df = rotatedMW(vz, vy, vx, v, is_core, n, B0)
+    df = RotMW(vz, vy, vx, v, is_core, n, B0)
     return cst.e * np.sqrt(vz**2 + vy**2 + vx**2) * Area(vz, vy, vx) * df
 
 
 def Signal_Count(bounds, is_core):
+    start1 = timeit.default_timer()
     output = []
     low = bounds[:-1]
     high = bounds[1:]
-    for i in range(len(bounds)-1):
+
+    def integration(low_bound, high_bound):
+        # start = timeit.default_timer()
         I_k = spi.tplquad(current_vdensity,
                           -lim, lim,
                           lambda x: -lim, lambda x: lim,
-                          lambda x, y: low[i], lambda x, y: high[i],
+                          lambda x, y: low_bound, lambda x, y: high_bound,
                           args=(va, is_core, constants["n"]))
-        output.append(I_k[0])
-    return np.array(output)
+        # stop = timeit.default_timer()
+        # print("T: ", stop-start)
+        return I_k
+
+    integration = np.vectorize(integration)
+    output = integration(low, high)[0]
+    # stop1 = timeit.default_timer()
+    # print("T1: ", stop1-start1)
+    return output
 
 
 def Data(velocities, is_core):
@@ -111,4 +121,7 @@ def Plot(E_plot, plot_total, is_core,
     xlabel = "{x}".format(x="Energy (ev)" if E_plot else "$V_z$ (km/s)")
     plt.xlabel(xlabel)
     plt.ylabel("Current (nA)")
-    plt.legend()
+    plt.legend(title="Signal in SPC with B field at\
+                (%g$^\\circ$, %g$^\\circ$) from the SPC normal"
+               % (np.degrees(np.arctan(B0[0]/B0[2])),
+                  np.degrees(np.arctan(B0[1]/B0[2]))))

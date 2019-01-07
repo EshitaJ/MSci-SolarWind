@@ -84,8 +84,7 @@ def rotatedMW(vz, vy, vx, v, is_core, n, B):
     x, y, z = V_rotated
 
     norm = n_p * (cst.m_p/(2 * np.pi * cst.k))**1.5 / np.sqrt(T_x * T_y * T_z)
-    exponent = -((z**2/T_z) + (y**2/T_y) + (x**2/T_x)) \
-        * (cst.m_p/(2 * cst.k))
+    exponent = -((z**2/T_z) + (y**2/T_y) + (x**2/T_x)) * (cst.m_p/(2 * cst.k))
     DF = norm * np.exp(exponent)
     return DF
 
@@ -105,13 +104,10 @@ def RotMW(vz, vy, vx, v, is_core, n, B):
     else:
         n_p = (1 - core_fraction) * n
         v_new = vel - v_sw - v_beam
-
     V = rotate(v_new, B, np.array([0, 0, 1]))
-
     x, y, z = V
 
     norm = n_p * (cst.m_p/(2 * np.pi * cst.k))**1.5 / np.sqrt(T_x * T_y * T_z)
-    exponent = -((z**2/T_z) + (y**2/T_y) + (x**2/T_x)) \
-        * (cst.m_p/(2 * cst.k))
+    exponent = -((z**2/T_z) + (y**2/T_y) + (x**2/T_x)) * (cst.m_p/(2 * cst.k))
     DF = norm * np.exp(exponent)
     return DF

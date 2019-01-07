@@ -45,7 +45,7 @@ def Total_Fit(E_plot, x_axis, data, fit_array,
     """Get a fit of total data"""
 
     def fit_func(x, variance, mu1, mu2, N1, N2):
-        """Bi-maxwellian fit"""
+        """Double Gaussian (bimodal) fit"""
         if E_plot:
             x = np.sqrt(x)
             mu1 = np.sqrt(mu1)
@@ -71,9 +71,10 @@ def Total_Fit(E_plot, x_axis, data, fit_array,
 
     func = fit_func(fit_array, *p)
     plt.plot(fit_array, func, 'k', linewidth=3,
-             label="Best Bi-Maxwellian fit")
+             label="Best double Gaussian fit with width %g %s"
+             % (p[0]**0.5, "eV" if E_plot else "km/s"))
 
-    # fitting individual gaussians around core and beam peaks
+    # fitting individual gaussians around core and beam pe aks
     indexes = peakutils.indexes(func, thres=0.001, min_dist=1)
 
     if E_plot:
@@ -87,17 +88,11 @@ def Total_Fit(E_plot, x_axis, data, fit_array,
                                          func[peak1-10:peak1+10],
                                          center_only=False)
     fit1 = peakutils.gaussian(fit_array1, *parameters1)
+    sigma1 = parameters1[2] * (2**0.5)
 
-    x1 = 2000 if E_plot else 650  # estimates of zeros for core and beam
-    x2 = 3000 if E_plot else 800
-    x3 = 4000 if E_plot else 930
-    x4 = 5000 if E_plot else 1000
-    zeros1 = spo.root(f1, [x1, x2])
-    print("1: ", zeros1.x[0], zeros1.x[1])
-    fwhm1 = zeros1.x[1] - zeros1.x[0]
     plt.plot(fit_array, fit1, 'r--',
-             label="Best Gaussian core fit (FWHM = %g %s)"
-             % (fwhm1, "eV" if E_plot else "km/s"))
+             label="Best Gaussian core fit (standard deviation = %g %s)"
+             % (sigma1, "eV" if E_plot else "km/s"))
 
     if len(indexes) > 1:
         peak2 = indexes[1]
@@ -105,15 +100,12 @@ def Total_Fit(E_plot, x_axis, data, fit_array,
                                              func[peak2-10:peak2+10],
                                              center_only=False)
         fit2 = peakutils.gaussian(fit_array1, *parameters2)
-
-        zeros2 = spo.root(f2, [x3, x4])
-        print("2: ", zeros2.x[0], zeros2.x[1])
-        fwhm2 = zeros2.x[1] - zeros2.x[0]
+        sigma2 = parameters2[2] * (2**0.5)
 
         plt.plot(fit_array, fit2, 'g--',
-                 label="Best Gaussian beam fit (FWHM = %g %s)"
-                 % (fwhm2, "eV" if E_plot else "km/s"))
+                 label="Best Gaussian beam fit (standard deviation = %g %s)"
+                 % (sigma2, "eV" if E_plot else "km/s"))
     else:
-        fwhm2 = 0
+        sigma2 = 0
 
-    return fwhm1, fwhm2
+    return sigma1, sigma2
