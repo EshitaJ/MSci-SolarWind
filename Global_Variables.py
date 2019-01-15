@@ -10,7 +10,8 @@ constants = {
 }
 
 B = constants["B"]
-B0 = np.array([0.6*B, 0.4*B, 0.7*B])  # B field in SC frame
+B0 = np.array([0.7*B, (2**0.5/10)*B, 0.7*B])  # B field in SC frame
+# B0 = np.array([0, B/(2**0.5), B/(2**0.5)])  # B field in SC frame
 print("B: ", B0)
 
 v_sw = np.array([0, 0, 700000])  # solar wind velocity in m/s

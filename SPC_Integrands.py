@@ -5,15 +5,15 @@ from VDF import *
 
 def integrand_I(vz, vy, vx, v, n):
     """integral returns total current"""
-    core = RotMW(vz, vy, vx, v, True, n, B0)
-    beam = RotMW(vz, vy, vx, v, False, n, B0)
+    core = rotatedMW(vz, vy, vx, v, True, n, B0)
+    beam = rotatedMW(vz, vy, vx, v, False, n, B0)
     # core = BiMax(vz, vy, vx, v, True, n)
     # beam = BiMax(vz, vy, vx, v, False, n)
     vdf = core + beam
     return cst.e * np.sqrt(vz**2 + vy**2 + vx**2) * Area(vz, vy, vx) * vdf
 
 
-def integrand_V(vz, vy, vx, v_alf, n):
+def integrand_W(vz, vy, vx, v_alf, n):
     """integral returns how much more current is in the
     top hemisphere compared to bottom hemisphere"""
     v = np.sqrt(vx**2 + vy**2 + vz**2)
@@ -21,13 +21,13 @@ def integrand_V(vz, vy, vx, v_alf, n):
     # SPC has an angular range of +/- 30 degrees and so only sees these angles
     angular_range = np.pi / 6
     if -angular_range < th < angular_range:
-        return integrand_I(vz, vy, vx, v_alf, n) * H(th)
-        # return integrand_I(vz, vy, vx, v_alf, n) * (th / angular_range)
+        # return integrand_I(vz, vy, vx, v_alf, n) * H(th)
+        return integrand_I(vz, vy, vx, v_alf, n) * (th / angular_range)
     else:
         return 0
 
 
-def integrand_W(vz, vy, vx, v_alf, n):
+def integrand_V(vz, vy, vx, v_alf, n):
     """integral returns how much more current is in the
     left hemisphere compared to right hemisphere"""
 
@@ -36,8 +36,8 @@ def integrand_W(vz, vy, vx, v_alf, n):
     # SPC has an angular range of +/- 30 degrees and so only sees these angles
     angular_range = np.pi / 6
     if -angular_range < th < angular_range:
-        # return integrand_I(vz, vy, vx, v_alf, n) * (th / angular_range)
-        return integrand_I(vz, vy, vx, v_alf, n) * H(th)
+        return integrand_I(vz, vy, vx, v_alf, n) * (th / angular_range)
+        # return integrand_I(vz, vy, vx, v_alf, n) * H(th)
     else:
         return 0
 

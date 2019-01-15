@@ -40,7 +40,7 @@ def FWHM(E_plot, is_core, x_axis, data, fit_array, mu_guess, variance_guess):
     return fwhm
 
 
-def Total_Fit(E_plot, x_axis, data, fit_array,
+def Total_Fit(E_plot, x_axis, data, fit_array, lbl,
               mu1_guess, mu2_guess, variance_guess):
     """Get a fit of total data"""
 
@@ -70,12 +70,12 @@ def Total_Fit(E_plot, x_axis, data, fit_array,
                              0.09, 0.01))
 
     func = fit_func(fit_array, *p)
-    plt.plot(fit_array, func, 'k', linewidth=3,
-             label="Best double Gaussian fit with width %g %s"
-             % (p[0]**0.5, "eV" if E_plot else "km/s"))
+    plt.plot(fit_array, func,
+             label="Best double Gaussian fit with width %g %s for %s"
+             % (p[0]**0.5, "eV" if E_plot else "km/s", lbl))
 
     # fitting individual gaussians around core and beam pe aks
-    indexes = peakutils.indexes(func, thres=0.001, min_dist=1)
+    indexes = peakutils.indexes(func, thres=0.0001, min_dist=1)
 
     if E_plot:
         fit_array1 = np.sqrt(fit_array)
@@ -90,9 +90,9 @@ def Total_Fit(E_plot, x_axis, data, fit_array,
     fit1 = peakutils.gaussian(fit_array1, *parameters1)
     sigma1 = parameters1[2] * (2**0.5)
 
-    plt.plot(fit_array, fit1, 'r--',
-             label="Best Gaussian core fit (standard deviation = %g %s)"
-             % (sigma1, "eV" if E_plot else "km/s"))
+    # plt.plot(fit_array, fit1, 'r--',
+    #          label="Best Gaussian core fit (width = %g %s)"
+    #          % (sigma1, "eV" if E_plot else "km/s"))
 
     if len(indexes) > 1:
         peak2 = indexes[1]
@@ -102,9 +102,9 @@ def Total_Fit(E_plot, x_axis, data, fit_array,
         fit2 = peakutils.gaussian(fit_array1, *parameters2)
         sigma2 = parameters2[2] * (2**0.5)
 
-        plt.plot(fit_array, fit2, 'g--',
-                 label="Best Gaussian beam fit (standard deviation = %g %s)"
-                 % (sigma2, "eV" if E_plot else "km/s"))
+        # plt.plot(fit_array, fit2, 'g--',
+        #          label="Best Gaussian beam fit (standard deviation = %g %s)"
+        #          % (sigma2, "eV" if E_plot else "km/s"))
     else:
         sigma2 = 0
 

@@ -49,20 +49,28 @@ if Fractional:
                             args=(va, constants["n"], 4))
     stop1 = timeit.default_timer()
 
-    print("I_k: ", I_k[0] * 1e9, "nA")
-    print("V_k: ", V_k[0], (I_k[0] * 1e9))  # 0.0  # (U-D)/(U+D)
-    print("W_k: ", W_k[0], (I_k[0] * 1e9))  # 0.0  # (L-R)/(L+R)
-    print("Quadrant1: ", Quadrant1[0]/I_k[0])  # 0.249999997 # U,R
-    print("Quadrant2: ", Quadrant2[0]/I_k[0])  # 0.249999997  # U,L
-    print("Quadrant3: ", Quadrant3[0]/I_k[0])  # 0.249999997  # D,L
-    print("Quadrant4: ", Quadrant4[0]/I_k[0])  # 0.249999997  # D,R
+    print("I_k: ", I_k[0] * 1e9, "\u00B1", I_k[1] * 1e9, "nA")
+    print("V_k: ", V_k[0]/I_k[0], )  # (U-D)/(U+D)
+    print("W_k: ", W_k[0]/I_k[0])  # (R-L)/(R+L)
+    print("Quadrant1: ", Quadrant1[0]/I_k[0])  # U,R
+    print("Quadrant2: ", Quadrant2[0]/I_k[0])  # U,L
+    print("Quadrant3: ", Quadrant3[0]/I_k[0])  # D,L
+    print("Quadrant4: ", Quadrant4[0]/I_k[0])  # D,R
     print("Norm: ",
           ((Quadrant1[0]+Quadrant2[0]+Quadrant3[0]+Quadrant4[0])/I_k[0]))
     print("Temperature: ", constants["T_z"])
+    print("V: ", (Quadrant1[0] + Quadrant2[0]
+                  - Quadrant3[0] - Quadrant4[0]) /
+                 (Quadrant1[0] + Quadrant2[0]
+                  + Quadrant3[0] + Quadrant4[0]))
+    print("W: ", (Quadrant1[0] + Quadrant4[0]
+                  - Quadrant2[0] - Quadrant3[0]) /
+                 (Quadrant1[0] + Quadrant2[0]
+                  + Quadrant3[0] + Quadrant4[0]))
     print("time taken: ", stop1-start, "s")
 
 if Plotting:
-    Plot(False, True, True, 700, 900, 250)
+    Plot(False, True, True, True, 700, 900, 250)
     # Plot(False, False, False, 700, 900, 250)
     # Plot(True, True, True, 2000, 5000, 500)
     # Plot(True, False, True, 2000, 5000, 500)
@@ -97,6 +105,7 @@ if __name__ == '__main__':
     plt.xlabel("$V_x$ (km/s)")
     plt.ylabel("$V_y$ (km/s)")
     plt.quiver(B0[0], B0[1])
+    plt.gca().set_aspect("equal")
 
     stop = timeit.default_timer()
     print("time taken: ", stop-start, "s")
