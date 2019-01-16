@@ -77,7 +77,7 @@ if Plotting:
     # Plot(True, False, False, 2000, 5000, 500)
 
     stop = timeit.default_timer()
-    print("time taken: ", stop-start, "s")
+    print("time taken: ", (stop-start)/60., "mins")
     plt.show()
 
 
@@ -109,5 +109,4 @@ if __name__ == '__main__':
 
     stop = timeit.default_timer()
     print("time taken: ", stop-start, "s")
-
     plt.show()

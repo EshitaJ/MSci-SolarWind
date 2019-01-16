@@ -82,6 +82,7 @@ def rotatedMW(vz, vy, vx, v, is_core, n, B):
     # print("R: ", R)
     # print("V: ", V_rotated-v_new)
     x, y, z = V_rotated
+    # x = x1 - 10000
 
     norm = n_p * (cst.m_p/(2 * np.pi * cst.k))**1.5 / np.sqrt(T_x * T_y * T_z)
     exponent = -((z**2/T_z) + (y**2/T_y) + (x**2/T_x)) * (cst.m_p/(2 * cst.k))

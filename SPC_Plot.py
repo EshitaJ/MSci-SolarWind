@@ -111,7 +111,7 @@ def Data(velocities, is_core, plates, plate):
             if os.path.isfile("core_signal_data.csv"):
                 signal = np.genfromtxt("core_signal_data.csv")
             else:
-                signal = Signal_Count(velocities, is_core) * 1e9
+                signal = Signal_Count(velocities, is_core, False, plate) * 1e9
 
                 np.savetxt("core_signal_data.csv", signal)
                 print("Saved, core")
@@ -119,7 +119,7 @@ def Data(velocities, is_core, plates, plate):
             if os.path.isfile("beam_signal_data.csv"):
                 signal = np.genfromtxt("beam_signal_data.csv")
             else:
-                signal = Signal_Count(velocities, is_core) * 1e9
+                signal = Signal_Count(velocities, is_core, False, plate) * 1e9
 
                 np.savetxt("beam_signal_data.csv", signal)
                 print("Saved, beam")
@@ -168,16 +168,25 @@ def Plot(E_plot, plot_total, is_core, plates,
         quad2 = Data(vz_m, True, True, 2)
         quad3 = Data(vz_m, True, True, 3)
         quad4 = Data(vz_m, True, True, 4)
-        total = quad1 + quad2 + quad3 + quad4
-        Total_Fit(E_plot, band_centres, quad1/total, fit_array, 'Quadrant 1',
-                  mu1_guess, mu2_guess, variance_guess)
-        Total_Fit(E_plot, band_centres, quad2/total, fit_array, 'Quadrant 2',
-                  mu1_guess, mu2_guess, variance_guess)
-        Total_Fit(E_plot, band_centres, quad3/total, fit_array, 'Quadrant 3',
-                  mu1_guess, mu2_guess, variance_guess)
-        Total_Fit(E_plot, band_centres, quad4/total, fit_array, 'Quadrant 4',
-                  mu1_guess, mu2_guess, variance_guess)
-        # Total_Fit(E_plot, band_centres, total/total, fit_array, 'Total',
+        core = Data(vz_m, True, False, 4)
+        beam = Data(vz_m, False, False, 4)
+        total_quads = quad1 + quad2 + quad3 + quad4
+        total = core + beam
+        plt.plot(band_centres, (quad1+quad4)/total_quads, label='R')
+        plt.plot(band_centres, (quad2+quad3)/total_quads, label='L')
+        plt.plot(band_centres, (quad1+quad2)/total_quads, label='U')
+        plt.plot(band_centres, (quad3+quad4)/total_quads, label='D')
+        # plt.plot(band_centres, total_quads/total,
+                 # label="Sum of quadrants / Total current measured")
+        # Total_Fit(E_plot, band_centres, quad1, fit_array, 'Quadrant 1',
+        #           mu1_guess, mu2_guess, variance_guess)
+        # Total_Fit(E_plot, band_centres, quad2, fit_array, 'Quadrant 2',
+        #           mu1_guess, mu2_guess, variance_guess)
+        # Total_Fit(E_plot, band_centres, quad3, fit_array, 'Quadrant 3',
+        #           mu1_guess, mu2_guess, variance_guess)
+        # Total_Fit(E_plot, band_centres, quad4, fit_array, 'Quadrant 4',
+                  # mu1_guess, mu2_guess, variance_guess)
+        # Total_Fit(E_plot, band_centres, total, fit_array, 'Total',
                   # mu1_guess, mu2_guess, variance_guess)
         plt.ylabel("Fractional Current")
 
