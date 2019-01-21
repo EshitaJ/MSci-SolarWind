@@ -1,7 +1,9 @@
+import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import scipy.integrate as spi
+from decimal import Decimal
 from utils import *
 
 
@@ -57,8 +59,8 @@ class SPAN:
 
         n = np.array([0.94, 0.35, 0])
         p = np.array([0.136, -0.367, -0.92])
-        theta = np.arccos(1/np.linalg.norm(vel - np.dot(vel, p) * p))
-        phi = np.arccos(1/np.linalg.norm(vel - np.dot(vel, n) * n))
+        theta = np.arccos(1 / np.linalg.norm(vel - np.dot(vel, p) * p))
+        phi = np.arccos(1 / np.linalg.norm(vel - np.dot(vel, n) * n))
 
         if theta_low < theta < theta_high and phi_low < phi < phi_high:
             return self.current_integral(vx=vx, vy=vy, vz=vz)
@@ -139,7 +141,7 @@ class SPAN:
 
         return N
 
-    def count_measure(self, v_low, v_high):
+    def count_measure(self, v_low, v_high, save_data=True):
         theta_arr_deg = np.linspace(-60, 60, 33)
         theta_arr = theta_arr_deg * np.pi / 180
         low_theta = theta_arr[:-1]
@@ -165,20 +167,55 @@ class SPAN:
 
         self.latest_count_matrix = count_matrix
 
-        plt.imshow(count_matrix, interpolation='none'
-                   , norm=colors.LogNorm(vmin=count_matrix[count_matrix != 0.0].min(),
-                                         vmax=count_matrix[count_matrix != 0.0].max())
+        if save_data:
+            np.savetxt('SPANDataxTx%.0ETy%.0ETz%.0ECF%.1f.csv'
+                       % (self.T_x, self.T_y, self.T_z, self.core_fraction),
+                       count_matrix, delimiter=',')
+
+        else:
+            plt.imshow(count_matrix, interpolation='none'
+                       , norm=colors.LogNorm(vmin=count_matrix[count_matrix != 0.0].min(),
+                                             vmax=count_matrix[count_matrix != 0.0].max())
+                       )
+
+            plt.title('SPAN Results streamng along x \n T_x=%.1E, T_y=%.1E, T_z=%.1E'
+                      % (self.T_x, self.T_y, self.T_z))
+            plt.xlabel('Phi Cell Index')
+            plt.ylabel('Theta Cell Index')
+
+            plt.show()
+
+    def load_data(self, file_loc):
+        data = np.genfromtxt(file_loc, delimiter=',')
+        print(data)
+        self.latest_count_matrix = data
+
+    def plot_data(self, savefig=True):
+        plt.imshow(self.latest_count_matrix, interpolation='none'
+                   , norm=colors.LogNorm(vmin=self.latest_count_matrix[self.latest_count_matrix != 0.0].min(),
+                                         vmax=self.latest_count_matrix[self.latest_count_matrix != 0.0].max())
                    )
+
+        plt.title('SPAN Results streaming along x \n T_x=%.1E, T_y=%.1E, T_z=%.1E \n Core fraction = %.1f'
+                  % (self.T_x, self.T_y, self.T_z, self.core_fraction))
+        plt.xlabel('Phi Cell Index')
+        plt.ylabel('Theta Cell Index')
+
+        if savefig:
+            plt.savefig('/home/henry/MSci-SolarWind/SPAN Plots/SPANDataxTx%.0ETy%.0ETz%.0E'
+                        % (self.T_x, self.T_y, self.T_z))
 
         plt.show()
 
 
 if __name__ == '__main__':
     z_l = 3.1e4
-    z_h = 2.5e6
+    z_h = 4e6
     xy = 3e6
     vA = 245531.8
-    device = SPAN(v_A=vA, T_x=1e4, T_y=1e4, T_z=2e5, n=92e6, core_fraction=0.9)
+    device = SPAN(v_A=vA, T_x=14e5, T_y=14e5, T_z=3e5, n=92e6, core_fraction=0.9)
     # device.current_measure(3.1e4, 2.5e6, 3e7, 0, 2*np.pi, 0, 2*np.pi)
     device.count_measure(v_low=z_l, v_high=z_h)
+    # device.load_data('/home/henry/MSci-SolarWind/Data/SPANDataxTx1.4E+06Ty1.4E+06Tz3E+05.csv')
+    device.plot_data()
 
