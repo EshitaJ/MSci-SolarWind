@@ -2,6 +2,7 @@ import numpy as np
 import peakutils
 import scipy.optimize as spo
 import matplotlib.pyplot as plt
+from Global_Variables import *
 
 
 def FWHM(E_plot, is_core, x_axis, data, fit_array, mu_guess, variance_guess):

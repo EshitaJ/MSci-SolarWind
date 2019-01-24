@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.constants as cst
+from Global_Variables import *
 
 
 def Detector(theta_x, theta_y, plate):
@@ -15,17 +16,17 @@ def Detector(theta_x, theta_y, plate):
     y = np.arccos(m * np.tan(theta_y))
 
     if plate == 1:
-        return (3*np.pi/2 - x - y + (np.tan(x) + 2/np.tan(y))*(np.cos(x))**2
-                + 3*np.sin(2*y)/2 - 2*np.cos(x)*np.cos(y)) / (2*np.pi)
+        return (3*pi/2 - x - y + (np.tan(x) + 2/np.tan(y))*(np.cos(x))**2
+                + 3*np.sin(2*y)/2 - 2*np.cos(x)*np.cos(y)) / (2*pi)
     elif plate == 2:
-        return (x + (np.pi/2) - y - (np.tan(x) + 2/np.tan(y))*(np.cos(x))**2
-                - 0.5*np.sin(2*y) + 2*np.cos(x)*np.cos(y)) / (2*np.pi)
+        return (x + (pi/2) - y - (np.tan(x) + 2/np.tan(y))*(np.cos(x))**2
+                - 0.5*np.sin(2*y) + 2*np.cos(x)*np.cos(y)) / (2*pi)
     elif plate == 3:
-        return (x - (np.pi/2) + y - (np.tan(x) - 2/np.tan(y))*(np.cos(x))**2
-                + 0.5*np.sin(2*y) - 2*np.cos(x)*np.cos(y)) / (2*np.pi)
+        return (x - (pi/2) + y - (np.tan(x) - 2/np.tan(y))*(np.cos(x))**2
+                + 0.5*np.sin(2*y) - 2*np.cos(x)*np.cos(y)) / (2*pi)
     elif plate == 4:
-        return (y + (np.pi/2) - x - (np.tan(y) + 2/np.tan(x))*(np.cos(y))**2
-                - 0.5*np.sin(2*x) + 2*np.cos(y)*np.cos(x)) / (2*np.pi)
+        return (y + (pi/2) - x - (np.tan(y) + 2/np.tan(x))*(np.cos(y))**2
+                - 0.5*np.sin(2*x) + 2*np.cos(y)*np.cos(x)) / (2*pi)
 
 
 def H(theta):
@@ -33,7 +34,7 @@ def H(theta):
     theta is angle from normal to SPC"""
     m = 1.51  # Value specific to SPC from alice's report
     x = np.arccos(m * np.tan(theta))
-    return (1 + (2/np.pi)*((np.sin(x)*np.cos(x)) - x))
+    return (1 + (2/pi)*((np.sin(x)*np.cos(x)) - x))
 
 
 def Area(vz, vy, vx):
@@ -41,8 +42,7 @@ def Area(vz, vy, vx):
     which is a function of velocity"""
     A_0 = 1.36e-4  # m^2
     v = np.sqrt(vx**2 + vy**2 + vz**2)
-    # elevation_angle = np.degrees(np.arctan(vz / v) - np.pi/2)
-    elevation_angle = np.degrees(np.pi/2 - (vz/v))
+    elevation_angle = np.degrees(pi/2 - (vz/v))
 
     # can't have negative area
     A1 = 1 - (1.15 * elevation_angle) / 90

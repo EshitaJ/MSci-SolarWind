@@ -4,7 +4,6 @@ import seaborn as sns
 import scipy.integrate as spi
 import scipy.constants as cst
 from SPC_Fits import *
-from SPC_Plates import *
 from Global_Variables import *
 from SPC_Plates import *
 from Quaternion import *
@@ -18,21 +17,29 @@ def current_vdensity(vz, vy, vx, v, is_core, n):
     return cst.e * np.sqrt(vz**2 + vy**2 + vx**2) * Area(vz, vy, vx) * df
 
 
-def integrand_plate(vz, vy, vx, v_alf, n, plate):
+def integrand_plate(vz, theta, phi, v_alf, n, plate):
     """integral returns the current in a given detector plate"""
-
-    v = np.sqrt(vx**2 + vy**2 + vz**2)
+    cos_theta = np.cos(theta)
+    sin_theta = np.sin(theta)
+    v = vz / sin_theta
+    vx = v * cos_theta * np.cos(phi)
+    vy = v * cos_theta * np.sin(phi)
     th_x = -np.arcsin(vx/v)
     th_y = np.arcsin(vy/v)
 
     # SPC has an angular range of +/- 30 degrees and so only sees these angles
-    angular_range = np.pi / 6
+    angular_range = pi / 6
 
     if -angular_range < th_x < angular_range \
             and -angular_range < th_y < angular_range:
-        cvd = current_vdensity(vz, vy, vx, v_alf, True, n) \
-            # + current_vdensity(vz, vy, vx, v_alf, False, n)
-        return cvd * Detector(th_x, th_y, plate)
+        jacobian = v**2 * sin_theta
+        core = current_vdensity(vz, vy, vx, v_alf, True, n)
+        if total:
+            beam = current_vdensity(vz, vy, vx, v_alf, False, n)
+            cvd = core + beam
+        else:
+            cvd = core
+        return cvd * jacobian
     else:
         return 0
 
@@ -44,15 +51,25 @@ def Signal_Count(bounds, is_core, plates, plate):
     high = bounds[1:]
 
     def integration(low_bound, high_bound):
-        # start = timeit.default_timer()
         if plates:
+            if plate == 1:
+                low_phi = 0.0
+                high_phi = pi / 2
+            elif plate == 2:
+                low_phi = pi / 2
+                high_phi = pi
+            elif plate == 3:
+                low_phi = pi
+                high_phi = pi * (3 / 2)
+            elif plate == 4:
+                low_phi = pi * (3 / 2)
+                high_phi = pi * 2
             I_k = spi.tplquad(integrand_plate,
-                              -lim, lim,
-                              lambda x: -lim, lambda x: lim,
-                              lambda x, y: low_bound, lambda x, y: high_bound,
+                              low_phi, high_phi,  # phi
+                              lambda phi: 0.0, lambda phi: pi,  # theta
+                              lambda phi, theta: low_bound,  # vz
+                              lambda phi, theta: high_bound,
                               args=(va, constants["n"], plate))
-            # stop = timeit.default_timer()
-            # print("T: ", stop-start)
         else:
                 I_k = spi.tplquad(current_vdensity,
                                   -lim, lim,
@@ -75,47 +92,50 @@ def Data(velocities, is_core, plates, plate):
     if plates:
         if plate == 1:
             if load:  # os.path.isfile("quad_1_data1.csv"):
-                signal = np.genfromtxt("N_%g_Theta_%g_quad_1_data.csv"
-                                       % (N, Th))
+                signal = np.genfromtxt("Plates_%s_N_%g_Theta_%g_quad_1.csv"
+                                       % ("total" if total else "core", N, Th))
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
 
-                np.savetxt("Isotropic_core_%s_%s_quad_1_data.csv" % ("N_%g" % N,
-                                                      "Theta_%g" % Th),
-                           signal)
+                np.savetxt("Plates_%s_%s_%s_quad_1.csv"
+                           % ("total" if total else "core", "N_%g" % N,
+                              "Theta_%g" % Th), signal)
                 print("Saved, quad 1 data")
         if plate == 2:
             if load:  # os.path.isfile("quad_2_data1.csv"):
-                signal = np.genfromtxt("N_%g_Theta_%g_quad_2_data.csv"
-                                       % (N, Th))
+                signal = np.genfromtxt("Plates_%s_N_%g_Theta_%g_quad_2.csv"
+                                       % ("total" if total else "core", N, Th))
+
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
 
-                np.savetxt("Isotropic_core_%s_%s_quad_2_data.csv" % ("N_%g" % N,
-                                                      "Theta_%g" % Th),
-                           signal)
+                np.savetxt("Plates_%s_%s_%s_quad_2.csv"
+                           % ("total" if total else "core", "N_%g" % N,
+                              "Theta_%g" % Th), signal)
                 print("Saved, quad 2 data")
         if plate == 3:
             if load:  # os.path.isfile("quad_3_data1.csv"):
-                signal = np.genfromtxt("N_%g_Theta_%g_quad_3_data.csv"
-                                       % (N, Th))
+                signal = np.genfromtxt("Plates_%s_N_%g_Theta_%g_quad_3.csv"
+                                       % ("total" if total else "core", N, Th))
+
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
 
-                np.savetxt("Isotropic_core_%s_%s_quad_3_data.csv" % ("N_%g" % N,
-                                                      "Theta_%g" % Th),
-                           signal)
+                np.savetxt("Plates_%s_%s_%s_quad_3.csv"
+                           % ("total" if total else "core", "N_%g" % N,
+                              "Theta_%g" % Th), signal)
                 print("Saved, quad 3 data")
         if plate == 4:
             if load:  # os.path.isfile("quad_4_data1.csv"):
-                signal = np.genfromtxt("N_%g_Theta_%g_quad_4_data.csv"
-                                       % (N, Th))
+                signal = np.genfromtxt("Plates_%s_N_%g_Theta_%g_quad_4.csv"
+                                       % ("total" if total else "core", N, Th))
+
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
 
-                np.savetxt("Isotropic_core_%s_%s_quad_4_data.csv" % ("N_%g" % N,
-                                                      "Theta_%g" % Th),
-                           signal)
+                np.savetxt("Plates_%s_%s_%s_quad_4.csv"
+                           % ("total" if total else "core", "N_%g" % N,
+                              "Theta_%g" % Th), signal)
                 print("Saved, quad 4 data")
 
     else:
@@ -186,18 +206,18 @@ def Plot(E_plot, plot_total, is_core, plates,
         # U = quad1 + quad2
         # D = quad3 + quad4
         # L = quad2 + quad3
-        total_quads = quad1 + quad2 + quad3 + quad4
         # R = quad1 + quad4
+        total_quads = quad1 + quad2 + quad3 + quad4
         # total = core + beam
         # plt.plot(band_centres, (U-D)/(U+D), label='V')
         # plt.plot(band_centres, (R-L)/(R+L), label='W')
-        plt.plot(band_centres, quad1/total_quads, 'ko', label='Quadrant 1')
-        plt.plot(band_centres, quad2/total_quads, 'ro', label='Quadrant 2')
-        plt.plot(band_centres, quad3/total_quads, 'go', label='Quadrant 3')
-        plt.plot(band_centres, quad4/total_quads, 'bo', label='Quadrant 4')
+        plt.plot(band_centres, quad1, 'k-', label='Quadrant 1')
+        plt.plot(band_centres, quad2, 'r-', label='Quadrant 2')
+        plt.plot(band_centres, quad3, 'go', label='Quadrant 3')
+        plt.plot(band_centres, quad4, 'bo', label='Quadrant 4')
         # plt.plot(band_centres, total_quads, label='Sum of quadrants')
 
-        plt.ylabel("Fractional Current")
+        # plt.ylabel("Fractional Current")
 
     else:
         if plot_total:

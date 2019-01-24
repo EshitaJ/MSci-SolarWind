@@ -2,79 +2,18 @@ import timeit
 import plasmapy
 from astropy import units as u
 from SPC_Plot import *
-from SPC_Plates import *
-from SPC_Integrands import *
+# from SPC_Plates import *
 
-Fractional = False
 Plotting = True
 
 start = timeit.default_timer()
 
-# Current in the Faraday cup in a given velocity band
-if Fractional:
-    I_k = spi.tplquad(integrand_I,
-                      -lim, lim,
-                      lambda x: -lim, lambda x: lim,
-                      lambda x, y: band_low, lambda x, y: band_high,
-                      args=(va, constants["n"]))
-    V_k = spi.tplquad(integrand_V,
-                      -lim, lim,
-                      lambda x: -lim, lambda x: lim,
-                      lambda x, y: band_low, lambda x, y: band_high,
-                      args=(va, constants["n"]))
-    W_k = spi.tplquad(integrand_W,
-                      -lim, lim,
-                      lambda x: -lim, lambda x: lim,
-                      lambda x, y: band_low, lambda x, y: band_high,
-                      args=(va, constants["n"]))
-    Quadrant1 = spi.tplquad(integrand_plate,
-                            -lim, lim,
-                            lambda x: -lim, lambda x: lim,
-                            lambda x, y: band_low, lambda x, y: band_high,
-                            args=(va, constants["n"], 1))
-    Quadrant2 = spi.tplquad(integrand_plate,
-                            -lim, lim,
-                            lambda x: -lim, lambda x: lim,
-                            lambda x, y: band_low, lambda x, y: band_high,
-                            args=(va, constants["n"], 2))
-    Quadrant3 = spi.tplquad(integrand_plate,
-                            -lim, lim,
-                            lambda x: -lim, lambda x: lim,
-                            lambda x, y: band_low, lambda x, y: band_high,
-                            args=(va, constants["n"], 3))
-    Quadrant4 = spi.tplquad(integrand_plate,
-                            -lim, lim,
-                            lambda x: -lim, lambda x: lim,
-                            lambda x, y: band_low, lambda x, y: band_high,
-                            args=(va, constants["n"], 4))
-    stop1 = timeit.default_timer()
-
-    print("I_k: ", I_k[0] * 1e9, "\u00B1", I_k[1] * 1e9, "nA")
-    print("V_k: ", V_k[0]/I_k[0], )  # (U-D)/(U+D)
-    print("W_k: ", W_k[0]/I_k[0])  # (R-L)/(R+L)
-    print("Quadrant1: ", Quadrant1[0]/I_k[0])  # U,R
-    print("Quadrant2: ", Quadrant2[0]/I_k[0])  # U,L
-    print("Quadrant3: ", Quadrant3[0]/I_k[0])  # D,L
-    print("Quadrant4: ", Quadrant4[0]/I_k[0])  # D,R
-    print("Norm: ",
-          ((Quadrant1[0]+Quadrant2[0]+Quadrant3[0]+Quadrant4[0])/I_k[0]))
-    print("Temperature: ", constants["T_z"])
-    print("V: ", (Quadrant1[0] + Quadrant2[0]
-                  - Quadrant3[0] - Quadrant4[0]) /
-                 (Quadrant1[0] + Quadrant2[0]
-                  + Quadrant3[0] + Quadrant4[0]))
-    print("W: ", (Quadrant1[0] + Quadrant4[0]
-                  - Quadrant2[0] - Quadrant3[0]) /
-                 (Quadrant1[0] + Quadrant2[0]
-                  + Quadrant3[0] + Quadrant4[0]))
-    print("time taken: ", stop1-start, "s")
-
 if Plotting:
     Plot(False, False, True, True, 700, 900, 250, num=N)
-    # Plot(False, False, False, 700, 900, 250)
-    # Plot(True, True, True, 2000, 5000, 500)
-    # Plot(True, False, True, 2000, 5000, 500)
-    # Plot(True, False, False, 2000, 5000, 500)
+    # Plot(False, False, False, False, 700, 900, 250)
+    # Plot(True, True, True, False, 2000, 5000, 500)
+    # Plot(True, False, True, False, 2000, 5000, 500)
+    # Plot(True, False, False, False, 2000, 5000, 500)
 
     stop = timeit.default_timer()
     print("time taken: ", (stop-start)/60., "mins")
@@ -82,9 +21,9 @@ if Plotting:
 
 
 def RBM(x, y):
-    core = rotatedMW(700000+va, y, x, 0, True, constants["n"], B0)
-    beam = rotatedMW(700000+va, y, x, va, False, constants["n"], B0)
-    return core + beam
+    core = rotatedMW(700000, y, x, 0, True, constants["n"], B0)
+    # beam = rotatedMW(700000+va, y, x, va, False, constants["n"], B0)
+    return core  # + beam
 
 
 def BM(x, y):
@@ -93,18 +32,18 @@ def BM(x, y):
     return core
 
 
-# if __name__ == '__main__':
-#
-#     lim1 = 1e6
-#     x = np.linspace(-lim1, lim1, 100)
-#     y = np.linspace(-lim1, lim1, 100)
-#     X, Y = np.meshgrid(x, y)  # SC frame
-#     Z = RBM(X, Y)  # B frame
-#
-#     plt.contour(X/1e3, Y/1e3, Z)
-#     plt.xlabel("$V_x$ (km/s)")
-#     plt.ylabel("$V_y$ (km/s)")
-#     plt.quiver(B0[0], B0[1])
-#     plt.gca().set_aspect("equal")
-#
-#     plt.show()
+if __name__ == '__main__':
+
+    lim1 = 1e6
+    x = np.linspace(-lim1, lim1, 100)
+    y = np.linspace(-lim1, lim1, 100)
+    X, Y = np.meshgrid(x, y)  # SC frame
+    Z = RBM(X, Y)  # B frame
+
+    plt.contour(X/1e3, Y/1e3, Z)
+    plt.xlabel("$V_x$ (km/s)")
+    plt.ylabel("$V_y$ (km/s)")
+    plt.quiver(B0[0], B0[1])
+    plt.gca().set_aspect("equal")
+
+    plt.show()

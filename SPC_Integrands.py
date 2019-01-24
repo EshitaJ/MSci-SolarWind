@@ -1,3 +1,4 @@
+from Global_Variables import *
 from SPC_Plates import *
 from SPC_Plot import *
 from VDF import *
@@ -19,7 +20,7 @@ def integrand_W(vz, vy, vx, v_alf, n):
     v = np.sqrt(vx**2 + vy**2 + vz**2)
     th = -np.arcsin(vx/v)
     # SPC has an angular range of +/- 30 degrees and so only sees these angles
-    angular_range = np.pi / 6
+    angular_range = pi / 6
     if -angular_range < th < angular_range:
         # return integrand_I(vz, vy, vx, v_alf, n) * H(th)
         return integrand_I(vz, vy, vx, v_alf, n) * (th / angular_range)
@@ -34,7 +35,7 @@ def integrand_V(vz, vy, vx, v_alf, n):
     v = np.sqrt(vx**2 + vy**2 + vz**2)
     th = np.arcsin(vy/v)
     # SPC has an angular range of +/- 30 degrees and so only sees these angles
-    angular_range = np.pi / 6
+    angular_range = pi / 6
     if -angular_range < th < angular_range:
         return integrand_I(vz, vy, vx, v_alf, n) * (th / angular_range)
         # return integrand_I(vz, vy, vx, v_alf, n) * H(th)
@@ -50,7 +51,7 @@ def integrand_plate(vz, vy, vx, v_alf, n, plate):
     th_y = np.arcsin(vy/v)
 
     # SPC has an angular range of +/- 30 degrees and so only sees these angles
-    angular_range = np.pi / 6
+    angular_range = pi / 6
 
     if -angular_range < th_x < angular_range \
             and -angular_range < th_y < angular_range:
