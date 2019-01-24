@@ -3,17 +3,19 @@ import scipy.constants as cst
 
 constants = {
     "n": 92e6,  # m^-3
-    "T_x": 14e5,  # K
-    "T_y": 14e5,  # K
-    "T_z": 3e5,  # K
+    "T_x": 9e5,  # K
+    "T_y": 9e5,  # K
+    "T_z": 9e5,  # K
     "B": 108e-9  # T
 }
 
 B = constants["B"]
 # B0 = np.array([0.7*B, (2**0.5/10)*B, 0.7*B])  # B field in SC frame
 # B0 = np.array([0, 0, B])  # B field in SC frame
-# B0 = np.array([(0.1**0.5)*B, (0.3**0.5)*B, (0.6**0.5)*B])
-B0 = np.array([0, B/(2**0.5), B/(2**0.5)])  # B field in SC frame
+# B0 = np.array([(0.2**0.5)*B, (0.3**0.5)*B, (0.5**0.5)*B])  # Theta 1
+# B0 = np.array([(0.1**0.5)*B, (0.6**0.5)*B, (0.3**0.5)*B])  # Theta 2
+B0 = np.array([(0.2**0.5)*B, (0.1**0.5)*B, (0.7**0.5)*B])  # Theta 3
+# B0 = np.array([0, B/(2**0.5), B/(2**0.5)])  # B field in SC frame
 print("B: ", B0)
 
 v_sw = np.array([0, 0, 700000])  # solar wind velocity in m/s
@@ -29,3 +31,7 @@ corresponding to these velocities in m / s"""
 J = 1.6e-19  # multiply for ev to J conversions
 band_low = np.sqrt((2 * 100 * J) / cst.m_p)  # 138 km / s
 band_high = np.sqrt((2 * 8e3 * J) / cst.m_p)  # 1237 km / s
+
+load = False
+Th = 3
+N = 50

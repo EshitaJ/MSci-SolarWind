@@ -40,7 +40,7 @@ def FWHM(E_plot, is_core, x_axis, data, fit_array, mu_guess, variance_guess):
     return fwhm
 
 
-def Total_Fit(E_plot, x_axis, data, fit_array, lbl,
+def Total_Fit(E_plot, x_axis, data, fit_array,
               mu1_guess, mu2_guess, variance_guess):
     """Get a fit of total data"""
 
@@ -90,9 +90,9 @@ def Total_Fit(E_plot, x_axis, data, fit_array, lbl,
     fit1 = peakutils.gaussian(fit_array1, *parameters1)
     sigma1 = parameters1[2] * (2**0.5)
 
-    # plt.plot(fit_array, fit1, 'r--',
-    #          label="Best Gaussian core fit (width = %g %s)"
-    #          % (sigma1, "eV" if E_plot else "km/s"))
+    plt.plot(fit_array, fit1, 'r--',
+             label="Best Gaussian core fit (width = %g %s)"
+             % (sigma1, "eV" if E_plot else "km/s"))
 
     if len(indexes) > 1:
         peak2 = indexes[1]
@@ -102,9 +102,9 @@ def Total_Fit(E_plot, x_axis, data, fit_array, lbl,
         fit2 = peakutils.gaussian(fit_array1, *parameters2)
         sigma2 = parameters2[2] * (2**0.5)
 
-        # plt.plot(fit_array, fit2, 'g--',
-        #          label="Best Gaussian beam fit (standard deviation = %g %s)"
-        #          % (sigma2, "eV" if E_plot else "km/s"))
+        plt.plot(fit_array, fit2, 'g--',
+                 label="Best Gaussian beam fit (standard deviation = %g %s)"
+                 % (sigma2, "eV" if E_plot else "km/s"))
     else:
         sigma2 = 0
 

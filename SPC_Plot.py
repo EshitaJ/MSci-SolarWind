@@ -31,7 +31,7 @@ def integrand_plate(vz, vy, vx, v_alf, n, plate):
     if -angular_range < th_x < angular_range \
             and -angular_range < th_y < angular_range:
         cvd = current_vdensity(vz, vy, vx, v_alf, True, n) \
-            + current_vdensity(vz, vy, vx, v_alf, False, n)
+            # + current_vdensity(vz, vy, vx, v_alf, False, n)
         return cvd * Detector(th_x, th_y, plate)
     else:
         return 0
@@ -74,36 +74,48 @@ def Signal_Count(bounds, is_core, plates, plate):
 def Data(velocities, is_core, plates, plate):
     if plates:
         if plate == 1:
-            if os.path.isfile("quad_1_data.csv"):
-                signal = np.genfromtxt("quad_1_data.csv")
+            if load:  # os.path.isfile("quad_1_data1.csv"):
+                signal = np.genfromtxt("N_%g_Theta_%g_quad_1_data.csv"
+                                       % (N, Th))
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
 
-                np.savetxt("quad_1_data.csv", signal)
+                np.savetxt("Isotropic_core_%s_%s_quad_1_data.csv" % ("N_%g" % N,
+                                                      "Theta_%g" % Th),
+                           signal)
                 print("Saved, quad 1 data")
         if plate == 2:
-            if os.path.isfile("quad_2_data.csv"):
-                signal = np.genfromtxt("quad_2_data.csv")
+            if load:  # os.path.isfile("quad_2_data1.csv"):
+                signal = np.genfromtxt("N_%g_Theta_%g_quad_2_data.csv"
+                                       % (N, Th))
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
 
-                np.savetxt("quad_2_data.csv", signal)
+                np.savetxt("Isotropic_core_%s_%s_quad_2_data.csv" % ("N_%g" % N,
+                                                      "Theta_%g" % Th),
+                           signal)
                 print("Saved, quad 2 data")
         if plate == 3:
-            if os.path.isfile("quad_3_data.csv"):
-                signal = np.genfromtxt("quad_3_data.csv")
+            if load:  # os.path.isfile("quad_3_data1.csv"):
+                signal = np.genfromtxt("N_%g_Theta_%g_quad_3_data.csv"
+                                       % (N, Th))
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
 
-                np.savetxt("quad_3_data.csv", signal)
+                np.savetxt("Isotropic_core_%s_%s_quad_3_data.csv" % ("N_%g" % N,
+                                                      "Theta_%g" % Th),
+                           signal)
                 print("Saved, quad 3 data")
         if plate == 4:
-            if os.path.isfile("quad_4_data.csv"):
-                signal = np.genfromtxt("quad_4_data.csv")
+            if load:  # os.path.isfile("quad_4_data1.csv"):
+                signal = np.genfromtxt("N_%g_Theta_%g_quad_4_data.csv"
+                                       % (N, Th))
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
 
-                np.savetxt("quad_4_data.csv", signal)
+                np.savetxt("Isotropic_core_%s_%s_quad_4_data.csv" % ("N_%g" % N,
+                                                      "Theta_%g" % Th),
+                           signal)
                 print("Saved, quad 4 data")
 
     else:
@@ -135,6 +147,7 @@ def Plot(E_plot, plot_total, is_core, plates,
     (function needs to be called once for core and once for beam if =False);
     @ is_core=True (relevant iff plot_total=False) calculates and plots core,
     and otherwise beam;
+    @ plates=True plots the current in each of the 4 plates
     @ mu1_guess and mu2_guess are used as estimates of
     core and beam peaks respectively for fitting;
     @ variance_guess is estimate of variance for fitting (for now,
@@ -144,7 +157,7 @@ def Plot(E_plot, plot_total, is_core, plates,
 
     # unequal bin widths in velocity as potential is what is varied
     # for now assume equal bin widths in potential, but can change later
-    potential = np.linspace(100, 8e3, int(num))
+    potential = np.linspace(100, 8000, int(num))
     vz_m = np.sqrt((2 * potential * J) / cst.m_p)  # z velocity in m/s
 
     vz_k = vz_m / 1e3  # velocity in km/s for plotting purposes
@@ -168,42 +181,38 @@ def Plot(E_plot, plot_total, is_core, plates,
         quad2 = Data(vz_m, True, True, 2)
         quad3 = Data(vz_m, True, True, 3)
         quad4 = Data(vz_m, True, True, 4)
-        core = Data(vz_m, True, False, 4)
-        beam = Data(vz_m, False, False, 4)
+        # core = Data(vz_m, True, False, 4)
+        # beam = Data(vz_m, False, False, 4)
+        # U = quad1 + quad2
+        # D = quad3 + quad4
+        # L = quad2 + quad3
         total_quads = quad1 + quad2 + quad3 + quad4
-        total = core + beam
-        plt.plot(band_centres, (quad1+quad4)/total_quads, label='R')
-        plt.plot(band_centres, (quad2+quad3)/total_quads, label='L')
-        plt.plot(band_centres, (quad1+quad2)/total_quads, label='U')
-        plt.plot(band_centres, (quad3+quad4)/total_quads, label='D')
-        # plt.plot(band_centres, total_quads/total,
-                 # label="Sum of quadrants / Total current measured")
-        # Total_Fit(E_plot, band_centres, quad1, fit_array, 'Quadrant 1',
-        #           mu1_guess, mu2_guess, variance_guess)
-        # Total_Fit(E_plot, band_centres, quad2, fit_array, 'Quadrant 2',
-        #           mu1_guess, mu2_guess, variance_guess)
-        # Total_Fit(E_plot, band_centres, quad3, fit_array, 'Quadrant 3',
-        #           mu1_guess, mu2_guess, variance_guess)
-        # Total_Fit(E_plot, band_centres, quad4, fit_array, 'Quadrant 4',
-                  # mu1_guess, mu2_guess, variance_guess)
-        # Total_Fit(E_plot, band_centres, total, fit_array, 'Total',
-                  # mu1_guess, mu2_guess, variance_guess)
+        # R = quad1 + quad4
+        # total = core + beam
+        # plt.plot(band_centres, (U-D)/(U+D), label='V')
+        # plt.plot(band_centres, (R-L)/(R+L), label='W')
+        plt.plot(band_centres, quad1/total_quads, 'ko', label='Quadrant 1')
+        plt.plot(band_centres, quad2/total_quads, 'ro', label='Quadrant 2')
+        plt.plot(band_centres, quad3/total_quads, 'go', label='Quadrant 3')
+        plt.plot(band_centres, quad4/total_quads, 'bo', label='Quadrant 4')
+        # plt.plot(band_centres, total_quads, label='Sum of quadrants')
+
         plt.ylabel("Fractional Current")
 
     else:
         if plot_total:
-            core = Data(vz_m, True)  # velocities in m/s for calculations
-            beam = Data(vz_m, False)  # velocities in m/s for calculations
+            core = Data(vz_m, True, plates, 1)  # velocities in m/s
+            beam = Data(vz_m, False, plates, 1)  # velocities in m/s
             total = core + beam
             # can either plot total or beam stacked on core - both are same
             plt.bar(band_centres, core, width=band_width,
                     label="Measured core at $T_z = %g$" % constants["T_z"])
             plt.bar(band_centres, beam, width=band_width, bottom=core,
                     label="Measured beam at $T_z = %g$" % constants["T_z"])
-            Total_Fit(E_plot, band_centres, total, fit_array,
+            Total_Fit(E_plot, band_centres, total, fit_array, 'total VDF',
                       mu1_guess, mu2_guess, variance_guess)
         else:
-            signal = Data(vz_m, is_core)  # velocities in m/s for calculations
+            signal = Data(vz_m, is_core, plates, 1)  # velocities in m/s
             mu_guess = mu1_guess if is_core else mu2_guess
             FWHM(E_plot, is_core, band_centres, signal, fit_array,
                  mu_guess, variance_guess)

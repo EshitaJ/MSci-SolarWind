@@ -77,7 +77,7 @@ def rotatedMW(vz, vy, vx, v, is_core, n, B):
         n_p = (1 - core_fraction) * n
         v_new = vel - v_sw - v_beam
 
-    R = rotationmatrix(B, np.array([0, 0, 1]), True)
+    R = rotationmatrix(B, np.array([0, 0, -1]), True)
     V_rotated = np.dot(R, v_new)  # - v_sc
     # print("R: ", R)
     # print("V: ", V_rotated-v_new)

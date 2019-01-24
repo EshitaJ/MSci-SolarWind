@@ -70,7 +70,7 @@ if Fractional:
     print("time taken: ", stop1-start, "s")
 
 if Plotting:
-    Plot(False, True, True, True, 700, 900, 250)
+    Plot(False, False, True, True, 700, 900, 250, num=N)
     # Plot(False, False, False, 700, 900, 250)
     # Plot(True, True, True, 2000, 5000, 500)
     # Plot(True, False, True, 2000, 5000, 500)
@@ -93,20 +93,18 @@ def BM(x, y):
     return core
 
 
-if __name__ == '__main__':
-
-    lim1 = 1e6
-    x = np.linspace(-lim1, lim1, 100)
-    y = np.linspace(-lim1, lim1, 100)
-    X, Y = np.meshgrid(x, y)  # SC frame
-    Z = RBM(X, Y)  # B frame
-
-    plt.contour(X/1e3, Y/1e3, Z)
-    plt.xlabel("$V_x$ (km/s)")
-    plt.ylabel("$V_y$ (km/s)")
-    plt.quiver(B0[0], B0[1])
-    plt.gca().set_aspect("equal")
-
-    stop = timeit.default_timer()
-    print("time taken: ", stop-start, "s")
-    plt.show()
+# if __name__ == '__main__':
+#
+#     lim1 = 1e6
+#     x = np.linspace(-lim1, lim1, 100)
+#     y = np.linspace(-lim1, lim1, 100)
+#     X, Y = np.meshgrid(x, y)  # SC frame
+#     Z = RBM(X, Y)  # B frame
+#
+#     plt.contour(X/1e3, Y/1e3, Z)
+#     plt.xlabel("$V_x$ (km/s)")
+#     plt.ylabel("$V_y$ (km/s)")
+#     plt.quiver(B0[0], B0[1])
+#     plt.gca().set_aspect("equal")
+#
+#     plt.show()
