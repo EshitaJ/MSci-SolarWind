@@ -3,31 +3,39 @@ import quaternion as quat
 import timeit
 
 
-def rotate(vector, B, z_axis):
+def rotate(vector, B, z_axis, x_axis):
     """Rotating a vector using quaternions
     for rotation by a given angle around a given axis;
     B and z are 3D row vectors;
-    Either rotate B(VDF) onto z(SPC) or vice versa"""
+    Do z rotation first, and then x rotation"""
 
     B = B / np.linalg.norm(B)
     z = z_axis / np.linalg.norm(z_axis)
-    rot_vector = np.cross(B, z)
+    x = x_axis / np.linalg.norm(x_axis)
+    zrot_vector = np.cross(B, z)
+    xrot_vector = np.cross(B, x)
 
-    if np.linalg.norm(rot_vector) != 0:
+    if np.linalg.norm(zrot_vector) != 0 and np.linalg.norm(xrot_vector) != 0:
         # Iff B and z neither parallel nor anti-parallel
         vec = np.array([0.] + vector)
         # print(vec)
-        axis = np.array([0.] + rot_vector)
-        rot_axis = axis / np.linalg.norm(axis)
+        zaxis = np.array([0.] + zrot_vector)
+        zrot_axis = zaxis / np.linalg.norm(zaxis)
+        xaxis = np.array([0.] + xrot_vector)
+        xrot_axis = xaxis / np.linalg.norm(xaxis)
         # print("axis:", rot_axis)
-        rot_angle = np.arccos(np.dot(B, z))  # B and z are normalised
+        zrot_angle = np.arccos(np.dot(B, z))  # B and z are normalised
+        xrot_angle = np.arccos(np.dot(B, x))  # B and x are normalised
         # print("angle: ", rot_angle)
-        axis_angle = (rot_angle*0.5) * rot_axis
+        zaxis_angle = (zrot_angle*0.5) * zrot_axis
+        xaxis_angle = (xrot_angle*0.5) * xrot_axis
         v = quat.quaternion(*vec)
-        exponent = quat.quaternion(*axis_angle)
-        q = np.exp(exponent)
+        z_exp = quat.quaternion(*zaxis_angle)
+        x_exp = quat.quaternion(*xaxis_angle)
+        qz = np.exp(z_exp)
+        qx = np.exp(x_exp)
 
-        v_rot = (q * v * np.conjugate(q)).imag
+        v_rot = (qx * qz * v * np.conjugate(qz) * np.conjugate(qx)).imag
 
     elif np.dot(B, z) > 0:
         # B and z parallel
@@ -35,5 +43,8 @@ def rotate(vector, B, z_axis):
     else:
         # B and z anti-parallel
         v_rot = -vector
+
+    if (v_rot-vector).all == 0:
+        print(v_rot-vector)
 
     return v_rot

@@ -42,11 +42,11 @@ def Area(vz, vy, vx):
     which is a function of velocity"""
     A_0 = 1.36e-4  # m^2
     v = np.sqrt(vx**2 + vy**2 + vz**2)
-    elevation_angle = np.degrees(pi/2 - (vz/v))
+    elevation_angle = np.degrees(np.arccos(vz/v))
 
     # can't have negative area
     A1 = 1 - (1.15 * elevation_angle) / 90
-    A2 = 1 - (4.5 * (elevation_angle - 24))/90
+    A2 = 1 - (4.5 * (elevation_angle - 24)) / 90
     minimum = min(A1, A2)
     area = A_0 * minimum  # m^2
     return max(area, 0)

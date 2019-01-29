@@ -4,19 +4,22 @@ import scipy.constants as cst
 constants = {
     "n": 92e6,  # m^-3
     "T_x": 14e5,  # K
-    "T_y": 14e5,  # K
+    "T_y": 7e5,  # K
     "T_z": 3e5,  # K
     "B": 108e-9  # T
 }
 
 B = constants["B"]
+x1 = 0
+y1 = 0
 pi = np.pi
-# B0 = np.array([(0.2**0.5)*B, (0.3**0.5)*B, (0.5**0.5)*B])  # Theta 1
-# B0 = np.array([(0.1**0.5)*B, (0.6**0.5)*B, (0.3**0.5)*B])  # Theta 2
-# B0 = np.array([(0.2**0.5)*B, (0.1**0.5)*B, (0.7**0.5)*B])  # Theta 3
-# B0 = np.array([0, 0, B])  # B field in SC frame  # Theta 4
-B0 = np.array([(0.2**0.5)*B, (0.2**0.5)*B, (0.6**0.5)*B])  # Theta 5
-# B0 = np.array([(0.5**0.5)*B, (0)*B, (0.5**0.5)*B])  # Theta 6
+# B0 = np.array([(0.2**0.5)*B, (0.3**0.5)*B, (0.5**0.5)*B])  # Rotation 1
+B0 = np.array([(0.1**0.5)*B, (0.6**0.5)*B, (0.3**0.5)*B])  # Rotation 2
+# B0 = np.array([(0.2**0.5)*B, (0.1**0.5)*B, (-0.7**0.5)*B])  # Rotation 3
+# B0 = np.array([0, 0, B])  # B field in SC frame  # Rotation 4
+# B0 = np.array([(0.2**0.5)*B, (0.2**0.5)*B, (0.6**0.5)*B])  # Rotation 5
+# B0 = np.array([(0.5**0.5)*B, (0)*B, (0.5**0.5)*B])  # Rotation 6
+# B0 = np.array([0, (0.5**0.5)*B, (0.5**0.5)*B])  # Rotation 7
 print("B: ", B0)
 
 v_sw = np.array([0, 0, 700000])  # solar wind velocity in m/s
@@ -34,6 +37,6 @@ band_low = np.sqrt((2 * 100 * J) / cst.m_p)  # 138 km / s
 band_high = np.sqrt((2 * 8e3 * J) / cst.m_p)  # 1237 km / s
 
 load = False
-total = False
-Th = 5.1
+total = True
+Rot = 2
 N = 50
