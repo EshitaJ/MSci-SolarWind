@@ -3,13 +3,13 @@ import quaternion as quat
 import timeit
 
 
-def rotate(vector, axis_ rot_angle):
-    """Rotating a vector using quaternions
+def rotate(vector, axis, rot_angle):
+    """
+    Rotating a vector using quaternions
     for rotation by a given angle around a given axis;
     B and z are 3D row vectors;
-    Either rotate B(VDF) onto z(SPC) or vice versa"""
-
-
+    Either rotate B(VDF) onto z(SPC) or vice versa
+    """
 
     if np.linalg.norm(axis) != 0:
         # Iff B and z neither parallel nor anti-parallel
