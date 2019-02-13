@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import scipy.integrate as spi
+import scipy.optimize as spo
 from decimal import Decimal
 from utils import *
 
@@ -38,6 +39,20 @@ class SPAN:
                     T_x=self.T_x, T_y=self.T_y, T_z=self.T_z,
                     n=self.n, core_fraction=self.core_fraction, is_core=False,
                     bulk_velocity=self.bulk_velocity)
+        return vdf
+
+    def rotated_integral(self, vz, vx, vy):
+        vdf = RotatedBiMaW(x=vx, y=vy, z=vz,
+                           v_A=self.v_A,
+                           T_x=self.T_x, T_y=self.T_y, T_z=self.T_z,
+                           n=self.n, core_fraction=self.core_fraction, is_core=True,
+                           bulk_velocity=np.array([-self.bulk_velocity, 0, 0])) \
+              + \
+              RotatedBiMaW(x=vx, y=vy, z=vz,
+                           v_A=self.v_A,
+                           T_x=self.T_x, T_y=self.T_y, T_z=self.T_z,
+                           n=self.n, core_fraction=self.core_fraction, is_core=False,
+                           bulk_velocity=np.array([-self.bulk_velocity, 0, 0]))
         return vdf
 
     """def current_integral(self, vz, vx, vy):
@@ -128,42 +143,74 @@ class SPAN:
 
         return dN
 
-    def count_integrate(self, v_low, v_high, theta_low, theta_high, phi_low, phi_high):
-        N = spi.tplquad(self.count_integral,
-                        phi_low, phi_high,
-                        lambda x: theta_low, lambda x: theta_high,
-                        lambda x, y: v_low, lambda x, y: v_high)[0]
+    def rotated_count_integral(self, v, theta, phi, eff_A=0.01, dt=0.001):
+        x, y, z = sph_to_cart(r=v, theta=theta, phi=phi)
+        vdf = self.rotated_integral(vz=z, vx=x, vy=y)
+        jacobian = np.square(v) * np.cos(theta)
+
+        dN = vdf * v * eff_A * dt * jacobian
+
+        return dN
+
+    def count_integrate(self, v_low, v_high, theta_low, theta_high, phi_low, phi_high, ignore_SPAN_pos=False):
+        if ignore_SPAN_pos:
+            N = spi.tplquad(self.count_integral,
+                            phi_low, phi_high,
+                            lambda x: theta_low, lambda x: theta_high,
+                            lambda x, y: v_low, lambda x, y: v_high)[0]
+
+        else:
+            N = spi.tplquad(self.rotated_count_integral,
+                            phi_low, phi_high,
+                            lambda x: theta_low, lambda x: theta_high,
+                            lambda x, y: v_low, lambda x, y: v_high)[0]
 
         return N
 
-    def count_measure(self, v_low, v_high, save_data=True):
-        theta_arr_deg = np.linspace(-60, 60, 33)
-        theta_arr = theta_arr_deg * np.pi / 180
-        low_theta = theta_arr[:-1]
-        high_theta = theta_arr[1:]
+    def count_measure(self, v_low, v_high, save_data=True, ignore_SPAN_pos=False, mode='default'):
+        if mode == 'default':
+            theta_arr_deg = np.linspace(-60, 60, 33)
+            theta_arr = theta_arr_deg * np.pi / 180
+            low_theta = theta_arr[:-1]
+            high_theta = theta_arr[1:]
 
-        phi_arr_deg = np.concatenate((np.linspace(0, 112.5, 11), np.linspace(135, 247.5, 6)))
-        phi_arr = phi_arr_deg * np.pi / 180
-        low_phi = phi_arr[:-1]
-        high_phi = phi_arr[1:]
+            phi_arr_deg = np.concatenate((np.linspace(0, 112.5, 11), np.linspace(135, 247.5, 6)))
+            phi_arr = phi_arr_deg * np.pi / 180
+            low_phi = phi_arr[:-1]
+            high_phi = phi_arr[1:]
 
-        count_matrix = np.empty([32, 16])
+        elif mode == 'coarse':
+            theta_arr_deg = np.linspace(-60, 60, 6)
+            theta_arr = theta_arr_deg * np.pi / 180
+            low_theta = theta_arr[:-1]
+            high_theta = theta_arr[1:]
 
-        for theta_index in range(32):
-            for phi_index in range(16):
+            phi_arr_deg = np.linspace(0, 247.5, 9)
+            phi_arr = phi_arr_deg * np.pi / 180
+            low_phi = phi_arr[:-1]
+            high_phi = phi_arr[1:]
+
+        else:
+            print('this is not a valid mode')
+
+        count_matrix = np.empty([len(low_theta), len(low_phi)])
+
+        for theta_index in range(len(low_theta)):
+            for phi_index in range(len(low_phi)):
                 print(theta_index, phi_index)
                 value = self.count_integrate(
                     v_low=v_low, v_high=v_high,
                     theta_low=low_theta[theta_index],
                     theta_high=high_theta[theta_index],
                     phi_low=low_phi[phi_index],
-                    phi_high=high_phi[phi_index])
+                    phi_high=high_phi[phi_index],
+                    ignore_SPAN_pos=ignore_SPAN_pos)
                 count_matrix[theta_index][phi_index] = value
 
         self.latest_count_matrix = count_matrix
 
         if save_data:
-            np.savetxt('SPANDatayTx%.1ETy%.1ETz%.1ECF%.0f.csv'
+            np.savetxt('SPANDatazRotTx%.1ETy%.1ETz%.1ECF%.0f.csv'
                        % (self.T_x, self.T_y, self.T_z, self.core_fraction*10),
                        count_matrix, delimiter=',')
 
@@ -197,7 +244,7 @@ class SPAN:
                                               vmax=norm_max)
                         )
 
-        plt.title('SPAN Results streaming along y \n T_x=%.0fkm/s, T_y=%.0fkm/s, T_z=%.0fkm/s, Core fraction = %.1f'
+        plt.title('SPAN Results streaming along z \n T_x=%.0fkm/s, T_y=%.0fkm/s, T_z=%.0fkm/s, Core fraction = %.1f'
                   % (np.sqrt(cst.k * self.T_x / cst.m_p) / 1e3,
                      np.sqrt(cst.k * self.T_y / cst.m_p) / 1e3,
                      np.sqrt(cst.k * self.T_z / cst.m_p) / 1e3,
@@ -215,7 +262,7 @@ class SPAN:
 
         plt.show()
 
-    def pixel_energy_anlysis(self, theta_index, phi_index, resolution_number=100):
+    def pixel_energy_anlysis(self, theta_index, phi_index, resolution_number=100, find_FWHM=True):
         theta_arr_deg = np.linspace(-60, 60, 33)
         theta_arr = theta_arr_deg * np.pi / 180
         low_theta_arr = theta_arr[:-1]
@@ -269,6 +316,18 @@ class SPAN:
 
         plt.plot(v_mid_arr_km, count_array, marker='o')
 
+        if find_FWHM:
+            def BixMaxFit(x, mu1, mu2, var, n):
+                return n * np.exp(-(x - mu1) ** 2 / var) \
+                       + (1-n) * np.exp(-(x - mu2) ** 2 / var)
+
+            p, c = spo.curve_fit(BixMaxFit, v_mid_arr, count_array)
+
+            fitted_data = BixMaxFit(v_mid_arr, *p)
+            plt.plot(v_mid_arr_km, fitted_data,
+                     label="Best double Gaussian fit with width %g %s"
+                     % (p[3]**0.5, 'm/s'))
+
         plt.xlabel('Velocity/km')
         plt.ylabel('Count')
 
@@ -286,9 +345,9 @@ if __name__ == '__main__':
     z_h = 4e6
     xy = 3e6
     vA = 245531.8
-    device = SPAN(v_A=vA, T_x=1.4e6, T_y=3e5, T_z=1.4e6, n=92e6, core_fraction=0.9, bulk_velocity=700000)
-    device.count_measure(v_low=z_l, v_high=z_h)
-    # device.load_data('/home/henry/MSci-SolarWind/Data/y_Stream/Bulk_Speed700km/SPANDatayTx1.4E+06Ty3.0E+05Tz1.4E+06CF9.csv')
+    device = SPAN(v_A=vA, T_x=1.4e6, T_y=1.4e6, T_z=3e5, n=92e6, core_fraction=0.9, bulk_velocity=700000)
+    device.count_measure(v_low=z_l, v_high=z_h, mode='coarse')
+    #device.load_data('/home/henry/MSci-SolarWind/Data/y_Stream/Bulk_Speed700km/SPANDatayTx1.4E+06Ty3.0E+05Tz1.4E+06CF9.csv')
     device.plot_data(savefig=True,
-                     saveloc='/home/henry/MSci-SolarWind/SPAN_Plots/SPANDatayTx1.4E+06Ty3E+05Tz1.4E+06CF9.png')
-    # device.pixel_energy_anlysis(theta_index=15, phi_index=7, resolution_number=300)
+                     saveloc='/home/henry/MSci-SolarWind/SPAN_Plots/SPANDatazRotTx1.4E+06Ty1.4E+06Tz4E+05CF9.png')
+    # device.pixel_energy_anlysis(theta_index=15, phi_index=7, resolution_number=100)
