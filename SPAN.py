@@ -46,13 +46,13 @@ class SPAN:
                            v_A=self.v_A,
                            T_x=self.T_x, T_y=self.T_y, T_z=self.T_z,
                            n=self.n, core_fraction=self.core_fraction, is_core=True,
-                           bulk_velocity=np.array([-self.bulk_velocity, 0, 0])) \
+                           bulk_velocity=np.array([0, self.bulk_velocity, 0])) \
               + \
               RotatedBiMaW(x=vx, y=vy, z=vz,
                            v_A=self.v_A,
                            T_x=self.T_x, T_y=self.T_y, T_z=self.T_z,
                            n=self.n, core_fraction=self.core_fraction, is_core=False,
-                           bulk_velocity=np.array([-self.bulk_velocity, 0, 0]))
+                           bulk_velocity=np.array([0, self.bulk_velocity, 0]))
         return vdf
 
     """def current_integral(self, vz, vx, vy):
@@ -210,7 +210,7 @@ class SPAN:
         self.latest_count_matrix = count_matrix
 
         if save_data:
-            np.savetxt('SPANDatazRotTx%.1ETy%.1ETz%.1ECF%.0f.csv'
+            np.savetxt('SPANDataxRealRotTx%.1ETy%.1ETz%.1ECF%.0f.csv'
                        % (self.T_x, self.T_y, self.T_z, self.core_fraction*10),
                        count_matrix, delimiter=',')
 
@@ -220,7 +220,8 @@ class SPAN:
                                              vmax=count_matrix[count_matrix != 0.0].max())
                        )
 
-            plt.title('SPAN Results streamng along y \n T_x=%.1E, T_y=%.1E, T_z=%.1E'
+            plt.title('SPAN Results streaming along R \n T_R=%.0fkm/s, T_T=%.0fkm/s, T_N=%.0fkm/s \n'
+                      'n = [0, 0.35, 0.94], m = [-0.39, -0.86, 0.32]'
                       % (self.T_x, self.T_y, self.T_z))
             plt.xlabel('Phi Cell Index')
             plt.ylabel('Theta Cell Index')
@@ -244,11 +245,11 @@ class SPAN:
                                               vmax=norm_max)
                         )
 
-        plt.title('SPAN Results streaming along z \n T_x=%.0fkm/s, T_y=%.0fkm/s, T_z=%.0fkm/s, Core fraction = %.1f'
+        plt.title('SPAN Results streaming along y, Rotation First\n T_x=%.0fkm/s, T_y=%.0fkm/s, T_z=%.0fkm/s'
+                  '\n n = [1, 0, 0], m = [0, 1, 0]'
                   % (np.sqrt(cst.k * self.T_x / cst.m_p) / 1e3,
                      np.sqrt(cst.k * self.T_y / cst.m_p) / 1e3,
-                     np.sqrt(cst.k * self.T_z / cst.m_p) / 1e3,
-                     self.core_fraction))
+                     np.sqrt(cst.k * self.T_z / cst.m_p) / 1e3))
         plt.xlabel('Phi Cell Index')
         plt.ylabel('Theta Cell Index')
 
@@ -345,9 +346,9 @@ if __name__ == '__main__':
     z_h = 4e6
     xy = 3e6
     vA = 245531.8
-    device = SPAN(v_A=vA, T_x=1.4e6, T_y=1.4e6, T_z=3e5, n=92e6, core_fraction=0.9, bulk_velocity=700000)
-    device.count_measure(v_low=z_l, v_high=z_h, mode='coarse')
+    device = SPAN(v_A=vA, T_x=1.4e6, T_y=3e5, T_z=1.4e6, n=92e6, core_fraction=0.9, bulk_velocity=700000)
+    device.count_measure(v_low=z_l, v_high=z_h, mode='default', ignore_SPAN_pos=True)
     #device.load_data('/home/henry/MSci-SolarWind/Data/y_Stream/Bulk_Speed700km/SPANDatayTx1.4E+06Ty3.0E+05Tz1.4E+06CF9.csv')
     device.plot_data(savefig=True,
-                     saveloc='/home/henry/MSci-SolarWind/SPAN_Plots/SPANDatazRotTx1.4E+06Ty1.4E+06Tz4E+05CF9.png')
+                     saveloc='/home/henry/MSci-SolarWind/SPAN_Plots/1.png')
     # device.pixel_energy_anlysis(theta_index=15, phi_index=7, resolution_number=100)
