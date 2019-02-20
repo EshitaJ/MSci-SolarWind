@@ -350,5 +350,5 @@ if __name__ == '__main__':
     device.count_measure(v_low=z_l, v_high=z_h, mode='default', ignore_SPAN_pos=True)
     #device.load_data('/home/henry/MSci-SolarWind/Data/y_Stream/Bulk_Speed700km/SPANDatayTx1.4E+06Ty3.0E+05Tz1.4E+06CF9.csv')
     device.plot_data(savefig=True,
-                     saveloc='/home/henry/MSci-SolarWind/SPAN_Plots/1.png')
+                     saveloc='/home/henry/MSci-SolarWind/SPAN_Plots/2.png')
     # device.pixel_energy_anlysis(theta_index=15, phi_index=7, resolution_number=100)

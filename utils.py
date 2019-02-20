@@ -3,12 +3,13 @@ import numpy as np
 
 
 def BiMax(x, y, z, v_A, T_x, T_y, T_z, n, core_fraction, is_core, bulk_velocity=700000):
+    x, y, z = -x, -y, -z
     if is_core:
         n_p = core_fraction * n
-        y = y - bulk_velocity
+        y = y + bulk_velocity
     else:
         n_p = (1 - core_fraction) * n
-        y = y - v_A - bulk_velocity
+        y = y + v_A + bulk_velocity
 
     norm = n_p * (cst.m_p/(2 * np.pi * cst.k))**1.5 / np.sqrt(T_x * T_y * T_z)
     exponent = -((z**2/T_z) + (y**2/T_y) + (x**2/T_x)) \
@@ -68,8 +69,8 @@ nm_rotation_matrix = np.matmul(m_rotation_matrix, n_rotation_matrix)
 
 
 def RotatedBiMaW(x, y, z, v_A, T_x, T_y, T_z, n, core_fraction, is_core, bulk_velocity):
-
-    vel = np.array([-x, -y, -z])  # in SPC frame, -ve due to look direction; turned on here
+    #print(np.array([x, y, z]))
+    vel = np.array([x, y, z])  # in SPC frame, -ve due to look direction; turned on here
     v_beam = np.array([v_A, 0, 0])
     #print(nm_rotation_matrix)
     #print(vel)
@@ -91,3 +92,33 @@ def RotatedBiMaW(x, y, z, v_A, T_x, T_y, T_z, n, core_fraction, is_core, bulk_ve
     DF = norm * np.exp(exponent)
     #print('change places!')
     return DF
+
+
+"""def rotatedMW(vz, vy, vx, v, is_core, n):
+    T_x = constants["T_x"]  # K
+    T_y = constants["T_y"]
+    T_z = constants["T_z"]
+    core_fraction = 0.9
+
+    vel = np.array([-vx, -vy, -vz])  # in SPC frame, -ve due to look direction
+    v_beam = np.array([0, 0, v])
+
+    if is_core:
+        n_p = core_fraction * n
+        v_new = vel + v_sw
+    else:
+        n_p = (1 - core_fraction) * n
+        v_new = vel + v_sw + v_beam
+
+    v_new -= v_sw
+
+    V_rotated = np.matmul(R, v_new)  # - v_sc
+    V_rotated += v_sw
+    x, y, z = V_rotated
+    x -= x1
+    y -= y1
+
+    norm = n_p * (cst.m_p/(2 * pi * cst.k))**1.5 / np.sqrt(T_x * T_y * T_z)
+    exponent = -((z**2/T_z) + (y**2/T_y) + (x**2/T_x)) * (cst.m_p/(2 * cst.k))
+    DF = norm * np.exp(exponent)
+    return DF"""
