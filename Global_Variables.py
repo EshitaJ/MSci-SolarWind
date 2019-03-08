@@ -3,31 +3,71 @@ import scipy.constants as cst
 
 constants = {
     "n": 92e6,  # m^-3
-    "T_x": 14e5,  # K
-    "T_y": 7e5,  # K
-    "T_z": 3e5,  # K
+    "T_x": 2.4e5,  # K
+    "T_y": 2.4e5,  # K
+    "T_z": 1.7e5,  # K
     "B": 108e-9  # T
 }
 
-B = constants["B"]
-x1 = 0
-y1 = 0
+E_plot = False
+Plates = True
+total = False
+Core = True
+
+load = True
+perturbed = False
+Rot = 'SPAN -X,-Y'
+N = 100
+print("N: ", N)
 pi = np.pi
-# B0 = np.array([(0.2**0.5)*B, (0.3**0.5)*B, (0.5**0.5)*B])  # Rotation 1
-B0 = np.array([(0.1**0.5)*B, (0.6**0.5)*B, (0.3**0.5)*B])  # Rotation 2
-# B0 = np.array([(0.2**0.5)*B, (0.1**0.5)*B, (-0.7**0.5)*B])  # Rotation 3
-# B0 = np.array([0, 0, B])  # B field in SC frame  # Rotation 4
-# B0 = np.array([(0.2**0.5)*B, (0.2**0.5)*B, (0.6**0.5)*B])  # Rotation 5
-# B0 = np.array([(0.5**0.5)*B, (0)*B, (0.5**0.5)*B])  # Rotation 6
-# B0 = np.array([0, (0.5**0.5)*B, (0.5**0.5)*B])  # Rotation 7
-print("B: ", B0)
+xthermal_speed = ((cst.k * constants["T_x"]) / cst.m_p)**0.5
+ythermal_speed = ((cst.k * constants["T_y"]) / cst.m_p)**0.5
+zthermal_speed = ((cst.k * constants["T_z"]) / cst.m_p)**0.5
 
-v_sw = np.array([0, 0, 700000])  # solar wind velocity in m/s
-v_sc = np.array([0, 0, 20000])  # space craft velocity in m/s
+B_dict = {
+    1: np.array([(-0.2**0.5), (-0.3**0.5), (-0.5**0.5)]),
+    2: np.array([(0.1**0.5), (0.6**0.5), (0.3**0.5)]),
+    3: np.array([(0.2**0.5), (0.1**0.5), (-0.7**0.5)]),
+    'Radial': np.array([0, 0, 1]),
+    5: np.array([(0.2**0.5), (0.2**0.5), (0.6**0.5)]),
+    'ZX': np.array([(0.5**0.5), 0, (0.5**0.5)]),
+    'SPAN -X,-Y': np.array([(-0.5**0.5), 0, (0.5**0.5)]),
+    'ZY': np.array([0, (0.5**0.5), (0.5**0.5)]),
+    8: np.array([(-0.1**0.5), (0.1**0.5), (0.8**0.5)]),
+    'Non-radial': np.array([0.1, 0.2, 1]),
+    'Big-deflection': np.array([0.3, 0.5, 0.5])
+    }
+
+B_hat = B_dict[Rot] / np.linalg.norm(B_dict[Rot])
+print("B0: ", B_hat, Rot)
+B0 = B_hat * constants["B"]
+dB = constants["B"] * 1e-3 * np.array([(0.3**0.5), (0.5**0.5), (0.2**0.5)])
+# print("dB: ", dB)
+B = (B0 + dB) if perturbed else B0
+# print("B: ", B)
+
+theta_0 = np.dot(B0, np.array([0, 0, 1])) / np.linalg.norm(B0)
+theta_BR = np.dot(B, np.array([0, 0, 1])) / np.linalg.norm(B)
+# print("thetas: ", theta_BR, theta_0)
+
+
 # B-field dependent alfven velocity for protons
-va = np.linalg.norm(B0) / np.sqrt(cst.mu_0 * constants["n"] * cst.m_p)
-print("V_alf: ", va)
+# va = np.linalg.norm(B0) / np.sqrt(cst.mu_0 * constants["n"] * cst.m_p)
+va = 88000  # m/s
+# print("V_alf: ", va)
 
+
+# v_sw = np.array([20000, 200000, 400000])  # solar wind bulk velocity in m/s
+bulk_speed = np.array([0, 0, 700000])  # sw bulk velocity in m/s
+v_sc = np.array([0, 0, 20000])  # space craft velocity in m/s
+# alfvenic fluctuation
+dv = va * (-np.cos(theta_BR) + np.cos(theta_0)) * B/np.linalg.norm(B)
+v_sw = (bulk_speed + dv) if perturbed else bulk_speed
+# print("speeds: ", bulk_speed, v_sw)
+beam_v = (va * B_hat) + v_sw
+
+print("V_sw: ", v_sw)
+print("V_beam: ", beam_v)
 lim = 2e6  # integration limit for SPC (use instead of np.inf)
 
 """SPC has an energy measurement range of 100 eV - 8 keV
@@ -35,8 +75,21 @@ corresponding to these velocities in m / s"""
 J = 1.6e-19  # multiply for ev to J conversions
 band_low = np.sqrt((2 * 100 * J) / cst.m_p)  # 138 km / s
 band_high = np.sqrt((2 * 8e3 * J) / cst.m_p)  # 1237 km / s
+sigma = np.sqrt((2 * zthermal_speed * J) / cst.m_p) / 1000
+print("sigma: ", sigma, zthermal_speed/1000)
 
-load = False
-total = True
-Rot = 2
-N = 50
+par_dict = {
+         'n': constants['n'],
+         'T_x': constants['T_x'],
+         'T_y': constants['T_y'],
+         'T_z': constants['T_z'],
+         'B': B,
+         'Bulk velocity': v_sw,
+         'Beam velocity': beam_v,
+         'dB': dB,
+         'N': N,
+         'Rot': Rot,
+         'Perturbed': perturbed,
+         'Total': total,
+         'Core': Core
+         }

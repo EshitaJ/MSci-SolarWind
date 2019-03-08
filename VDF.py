@@ -31,33 +31,27 @@ def rotationmatrix(B, axis):
     return R
 
 
-R = rotationmatrix(B0, np.array([0, 0, 1]))
+R = rotationmatrix(B, np.array([0, 0, 1]))
 print("R: ", R)
 
 
-def rotatedMW(vz, vy, vx, v, is_core, n):
+def rotatedMW(vz, vy, vx, v, is_core, n, core_fraction=0.8):
     T_x = constants["T_x"]  # K
     T_y = constants["T_y"]
     T_z = constants["T_z"]
-    core_fraction = 0.9
 
     vel = np.array([-vx, -vy, -vz])  # in SPC frame, -ve due to look direction
-    v_beam = np.array([0, 0, v])
+    v_beam = beam_v
 
     if is_core:
         n_p = core_fraction * n
         v_new = vel + v_sw
     else:
         n_p = (1 - core_fraction) * n
-        v_new = vel + v_sw + v_beam
+        v_new = vel + v_beam
 
-    v_new += v_sw
-
-    V_rotated = np.matmul(R, v_new)  # - v_sc
-    V_rotated -= v_sw
+    V_rotated = np.dot(R, v_new)  # - v_sc
     x, y, z = V_rotated
-    x -= x1
-    y -= y1
 
     norm = n_p * (cst.m_p/(2 * pi * cst.k))**1.5 / np.sqrt(T_x * T_y * T_z)
     exponent = -((z**2/T_z) + (y**2/T_y) + (x**2/T_x)) * (cst.m_p/(2 * cst.k))
