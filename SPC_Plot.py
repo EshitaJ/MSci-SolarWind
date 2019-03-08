@@ -4,33 +4,13 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import scipy.integrate as spi
 import scipy.constants as cst
-from decimal import Decimal
 from SPC_Fits import *
 from Global_Variables import *
 from scipy.stats import norm
 import Global_Variables as gv
 from SPC_Plates import *
 from VDF import *
-import csv
 sns.set()
-
-
-def Param_write(filename):
-    output = filename + '_parameters'
-    with open(output, 'w') as f:
-        for key in gv.par_dict.keys():
-            f.write("%s,%s\n" % (key, par_dict[key]))
-    print("Saved, parameters")
-
-
-def Param_read(filename):
-    with open(filename, mode='r') as infile:
-        reader = csv.reader(infile)
-        with open('params_new.csv', mode='w') as outfile:
-            writer = csv.writer(outfile)
-            mydict = {rows[0]: rows[1] for rows in reader}
-    print(mydict)
-    return mydict
 
 
 def current_vdensity(vz, vy, vx, v, is_core, n):
@@ -116,74 +96,57 @@ def Signal_Count(bounds, is_core, plates, plate):
 def Data(velocities, is_core, plates, plate):
     if plates:
         if plate == 1:
-            filename = "./Data/Isotropic_%s_%s_N_%g_Field_%s_quad_1.csv" \
-                        % ("Perturbed" if perturbed else "",
-                           "total" if total else "core", N, Rot)
             if load:
-                signal = np.genfromtxt(filename)
+                signal = np.genfromtxt('%s_quad_1.csv' % gv.filename)
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
 
-                np.savetxt(filename, signal)
-                Param_write(filename)
+                np.savetxt('%s_quad_1.csv' % gv.filename, signal)
                 print("Saved, quad 1 data")
         if plate == 2:
-            filename = "./Data/Isotropic_%s_%s_N_%g_Field_%s_quad_2.csv" % (
-                                    "Perturbed" if perturbed else "",
-                                    "total" if total else "core", N, Rot)
             if load:
-                signal = np.genfromtxt(filename)
+                signal = np.genfromtxt('%s_quad_2.csv' % gv.filename)
 
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
 
-                np.savetxt(filename, signal)
+                np.savetxt('%s_quad_2.csv' % gv.filename, signal)
                 print("Saved, quad 2 data")
         if plate == 3:
-            filename = "./Data/Isotropic_%s_%s_N_%g_Field_%s_quad_3.csv" \
-                        % ("Perturbed" if perturbed else "",
-                           "total" if total else "core", N, Rot)
             if load:
-                signal = np.genfromtxt(filename)
+                signal = np.genfromtxt('%s_quad_3.csv' % gv.filename)
 
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
 
-                np.savetxt(filename, signal)
+                np.savetxt('%s_quad_3.csv' % gv.filename, signal)
                 print("Saved, quad 3 data")
         if plate == 4:
-            filename = "./Data/Isotropic_%s_%s_N_%g_Field_%s_quad_4.csv" \
-                        % ("Perturbed" if perturbed else "",
-                           "total" if total else "core", N, Rot)
             if load:
-                signal = np.genfromtxt(filename)
+                signal = np.genfromtxt('%s_quad_4.csv' % gv.filename)
 
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
 
-                np.savetxt(filename, signal)
+                np.savetxt('%s_quad_4.csv' % gv.filename, signal)
                 print("Saved, quad 4 data")
 
     else:
         if is_core:
-            filename = "./Data/Isotropic_core_N_%g_Field_%s_data.csv" \
-                         % (N, Rot)
             if load:
-                signal = np.genfromtxt(filename)
+                signal = np.genfromtxt('%s_core.csv' % gv.filename)
             else:
                 signal = Signal_Count(velocities, True, False, plate) * 1e9
 
-                np.savetxt(filename, signal)
+                np.savetxt('%s_core.csv' % gv.filename, signal)
                 print("Saved, core")
         else:
-            filename = "./Data/beam_N_%g_Field_%s_data.csv" \
-                        % (N, Rot)
             if load:
-                signal = np.genfromtxt(filename)
+                signal = np.genfromtxt('%s_beam.csv' % gv.filename)
             else:
                 signal = Signal_Count(velocities, False, False, plate) * 1e9
 
-                np.savetxt(filename, signal)
+                np.savetxt('%s_beam.csv' % gv.filename, signal)
                 print("Saved, beam")
     return signal
 
@@ -257,6 +220,13 @@ def Plot(E_plot, plot_total, is_core, plates,
         V = (U-D) / (U+D)
         W = (R-L) / (R+L)
 
+        """Sloppy estimate of fraction of population in core"""
+        cut_off = 840
+        core_guess = total_quads[band_centres < cut_off]
+        beam_guess = total_quads[band_centres > cut_off]
+        fraction_guess = np.sum(core_guess) / np.sum(total_quads)
+        print("Core fraction estimate: ", fraction_guess)
+
         # plt.plot(band_centres, V, 'xkcd:diarrhea', label='V')
         # plt.plot(band_centres, W, 'xkcd:hot pink', label='W')
         # plt.plot(band_centres, quad1/total_quads, 'k--', label='Quadrant 1')
@@ -285,21 +255,21 @@ def Plot(E_plot, plot_total, is_core, plates,
         # plt.plot(band_centres, quad2, 'r-', label='Quadrant 2')
         # plt.plot(band_centres, quad3, 'g-', label='Quadrant 3')
         # plt.plot(band_centres, quad4, 'b-', label='Quadrant 4')
-        plt.plot(band_centres, total_quads, 'bx', label='Total')
+        plt.plot(band_centres, total_quads, 'bx', label='Total Current')
 
-        # Total_Fit(E_plot, band_centres, quad1, fit_array, 'Quad1', True,
+        # Total_Fit(E_plot, band_centres, quad1, fit_array, True,
         # mu1_guess, mu2_guess, variance_guess)
-        # Total_Fit(E_plot, band_centres, quad2, fit_array, 'Quad2', False,
+        # Total_Fit(E_plot, band_centres, quad2, fit_array, True,
         #           mu1_guess, mu2_guess, variance_guess)
-        # Total_Fit(E_plot, band_centres, quad3, fit_array, 'Quad3', False,
+        # Total_Fit(E_plot, band_centres, quad3, fit_array, True,
         #           mu1_guess, mu2_guess, variance_guess)
-        # Total_Fit(E_plot, band_centres, quad4, fit_array, 'Quad4', True,
+        # Total_Fit(E_plot, band_centres, quad4, fit_array, True,
         #           mu1_guess, mu2_guess, variance_guess)
 
         # plt.plot(band_centres, total_quads, label='Sum of quadrants')
 
         Total_Fit(E_plot, band_centres, total_quads, fit_array, True,
-        mu1_guess, mu2_guess, variance_guess, lbl='Total')
+        mu1_guess, mu2_guess, variance_guess)
 
         plt.ylabel("Current (nA)")
 
@@ -326,7 +296,7 @@ def Plot(E_plot, plot_total, is_core, plates,
                     label="Measured beam at $T_z = %g$" % constants["T_z"])
 
             # Total_Fit(E_plot, band_centres, total, fit_array, True,
-                      # mu1_guess, mu2_guess, variance_guess)
+            #           mu1_guess, mu2_guess, variance_guess)
             plt.ylabel("Current (nA)")
 
     xlabel = "{x}".format(x="Energy (eV)" if E_plot else "$V_z$ (km/s)")
@@ -336,9 +306,12 @@ def Plot(E_plot, plot_total, is_core, plates,
 
     plt.legend(title="%s B field at (%g$^\\circ$, %g$^\\circ$)"
                "\n from SPC normal"
-               "\n Tx = %.1E K, Ty = %.1E K, Tz = %.1E K"
+               "\n Tx = %.1E K"
+               "\n Ty = %.1E K"
+               "\n Tz = %.1E K"
                "\n Core velocity [%.0f, %.0f, %.0f] km/s"
-               "\n Beam velocity [%.0f, %.0f, %.0f] km/s"
+               "\n %s"
+               "\n %s"
                # "\n Recovered x average bulk speed of %.1f km/s"
                # "\n Recovered y average bulk speed of %.1f km/s"
                % (
@@ -349,13 +322,14 @@ def Plot(E_plot, plot_total, is_core, plates,
                   constants["T_y"],
                   constants["T_z"],
                   gv.v_sw[0]/1e3, gv.v_sw[1]/1e3, gv.v_sw[2]/1e3,
-                  gv.beam_v[0]/1000,
-                  gv.beam_v[1]/1000,
-                  gv.beam_v[2]/1000),
-                  # "\n Core fraction = 0.8" if gv.total else ""
+                  "Beam velocity [%.0f, %.0f, %.0f] km/s" % (
+                    gv.beam_v[0]/1000,
+                    gv.beam_v[1]/1000,
+                    gv.beam_v[2]/1000) if gv.total else "",
+                  "Core fraction = %0.2f"
+                  "\n Rough estimate = %.02f" \
+                  % (gv.core_fraction, fraction_guess) if gv.total else ""),
                   # np.average(vx_estimate),
                   # np.average(vy_estimate)
                   # ) % (
-
-                    # ),
                loc='center left', bbox_to_anchor=(1, 0.5))

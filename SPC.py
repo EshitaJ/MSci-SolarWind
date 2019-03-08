@@ -15,18 +15,18 @@ if Plotting:
     vbeam_peak = gv.beam_v[2] / 1e3
     Ecore_pk = (0.5 * cst.m_p * (vcore_peak*1e3)**2) / gv.J
     Ebeam_pk = (0.5 * cst.m_p * (vbeam_peak*1e3)**2) / gv.J
-    guess = (0.5 * cst.m_p * (44*1e3)**2) / gv.J
+    guess = (0.5 * cst.m_p * (40*1e3)**2) / gv.J
 
     core_peak = Ecore_pk if gv.E_plot else vcore_peak
     beam_peak = Ebeam_pk if gv.E_plot else vbeam_peak
     print("core, beam: ", core_peak, beam_peak)
-    var = (guess*2)**2 if gv.E_plot else 200
+    var = (guess*2)**2 if gv.E_plot else 30
 
     spcp.Plot(
               gv.E_plot, gv.total,
               gv.Core, gv.Plates,
               core_peak, beam_peak,
-              500, num=spcp.N)
+              var, num=spcp.N)
 
     stop = timeit.default_timer()
     print("time taken: ", (stop - start) / 60.0, "mins")

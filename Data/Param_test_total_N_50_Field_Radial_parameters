@@ -1,0 +1,18 @@
+n,92000000.0
+T_x,240000.0
+T_y,240000.0
+T_z,170000.0
+B strength,1.08e-07
+B field,[0.00e+00 0.00e+00 1.08e-07]
+Bulk velocity,[     0      0 700000]
+Beam velocity,[     0.              0.         945598.67567789]
+Spacecraft velocity,[0 0 0]
+Alfven speed,245598.67567789144
+N,50
+Rot,Radial
+Perturbed,False
+dB,[5.91540362e-11 7.63675324e-11 4.82990683e-11]
+dv,[0. 0. 0.]
+Total,True
+Core,True
+Core fraction,0.8
