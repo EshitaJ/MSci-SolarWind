@@ -13,6 +13,7 @@ E_plot = False
 Plates = True
 total = False
 Core = True
+core_fraction = 0.8
 
 load = True
 perturbed = False
@@ -91,5 +92,6 @@ par_dict = {
          'Rot': Rot,
          'Perturbed': perturbed,
          'Total': total,
-         'Core': Core
+         'Core': Core,
+         'Core fraction': core_fraction
          }

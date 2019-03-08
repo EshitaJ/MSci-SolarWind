@@ -34,7 +34,7 @@ def Param_read(filename):
 
 
 def current_vdensity(vz, vy, vx, v, is_core, n):
-    df = rotatedMW(vz, vy, vx, v, is_core, n)
+    df = rotatedMW(vz, vy, vx, v, is_core, n, core_fraction)
     return cst.e * np.sqrt(vz**2 + vy**2 + vx**2) * Area(vz, vy, vx) * df
 
 
