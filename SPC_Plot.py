@@ -172,7 +172,8 @@ def Plot(E_plot, plot_total, is_core, plates,
     # for now assume equal bin widths in potential, but can change later
     potential = np.linspace(100, 8000, int(num))
     vz_m = np.sqrt((2 * potential * J) / cst.m_p)  # z velocity in m/s
-
+    # vz_m = vz_m[vz_m < 1100000]
+    # vz_m = vz_m[vz_m > 500000]
     vz_k = vz_m / 1e3  # velocity in km/s for plotting purposes
 
     v_band_centres = (vz_k[:-1] + vz_k[1:]) / 2.0
@@ -220,20 +221,22 @@ def Plot(E_plot, plot_total, is_core, plates,
         V = (U-D) / (U+D)
         W = (R-L) / (R+L)
 
-        """Sloppy estimate of fraction of population in core"""
-        cut_off = 840
-        core_guess = total_quads[band_centres < cut_off]
-        beam_guess = total_quads[band_centres > cut_off]
-        fraction_guess = np.sum(core_guess) / np.sum(total_quads)
-        print("Core fraction estimate: ", fraction_guess)
+        # """Sloppy estimate of fraction of population in core"""
+        # cut_off = 840
+        # core_guess = total_quads[band_centres < cut_off]
+        # beam_guess = total_quads[band_centres > cut_off]
+        # fraction_guess = np.sum(core_guess) / np.sum(total_quads)
+        # print("Core fraction estimate: ", fraction_guess)
 
-        # plt.plot(band_centres, V, 'xkcd:diarrhea', label='V')
-        # plt.plot(band_centres, W, 'xkcd:hot pink', label='W')
-        # plt.plot(band_centres, quad1/total_quads, 'k--', label='Quadrant 1')
-        # plt.plot(band_centres, quad2/total_quads, 'r--', label='Quadrant 2')
-        # plt.plot(band_centres, quad3/total_quads, 'gx', label='Quadrant 3')
-        # plt.plot(band_centres, quad4/total_quads, 'bx', label='Quadrant 4')
-        # plt.ylabel("Fractional Current")
+        plt.plot(band_centres, V, 'xkcd:diarrhea', label='V', marker='x')
+        plt.plot(band_centres, W, 'xkcd:hot pink', label='W', marker='x')
+        plt.plot(band_centres, quad1/total_quads, 'k-', label='Quadrant 1')
+        plt.plot(band_centres, quad2/total_quads, 'r-', label='Quadrant 2')
+        plt.plot(band_centres, quad3/total_quads, 'g-', label='Quadrant 3')
+        plt.plot(band_centres, quad4/total_quads, 'b-', label='Quadrant 4')
+        plt.ylabel("Fractional Current")
+        plt.plot([700, 700], [-1, 1], '--')
+        plt.plot(band_centres, np.ones(len(band_centres)) * 0.25, '--')
 
         # p = (1 + V) / 2
         # d = (quad1 + quad2) / total_quads
@@ -255,7 +258,7 @@ def Plot(E_plot, plot_total, is_core, plates,
         # plt.plot(band_centres, quad2, 'r-', label='Quadrant 2')
         # plt.plot(band_centres, quad3, 'g-', label='Quadrant 3')
         # plt.plot(band_centres, quad4, 'b-', label='Quadrant 4')
-        plt.plot(band_centres, total_quads, 'bx', label='Total Current')
+        # plt.plot(band_centres, total_quads, 'bx', label='Total Current')
 
         # Total_Fit(E_plot, band_centres, quad1, fit_array, True,
         # mu1_guess, mu2_guess, variance_guess)
@@ -268,10 +271,10 @@ def Plot(E_plot, plot_total, is_core, plates,
 
         # plt.plot(band_centres, total_quads, label='Sum of quadrants')
 
-        Total_Fit(E_plot, band_centres, total_quads, fit_array, True,
-        mu1_guess, mu2_guess, variance_guess)
+        # Total_Fit(E_plot, band_centres, total_quads, fit_array, True,
+        # mu1_guess, mu2_guess, variance_guess)
 
-        plt.ylabel("Current (nA)")
+        # plt.ylabel("Current (nA)")
 
     else:
         if plot_total:

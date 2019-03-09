@@ -10,15 +10,16 @@ from scipy.signal import find_peaks
 def FWHM(E_plot, is_core, x_axis, data, fit_array, mu_guess, variance_guess):
     """Get FWHM of the data"""
 
-    def fit_func(x, variance, mu, N):
+    def fit_func(x, sg, mu, N):
         """1D maxwellian fit"""
         if E_plot:
             x = np.sqrt(x)
             mu = np.sqrt(mu)
-        return N * np.exp(-(x - mu)**2 / variance)
+            sg = sg.sqrt(sg)
+        return N * np.exp(-((x - mu1) / (np.sqrt(2) * sg))**2)
 
     p, c = spo.curve_fit(fit_func, x_axis, data,
-                         p0=(variance_guess, mu_guess, 0.09))
+                         p0=(variance_guess, mu_guess, 0.1))
 
     if E_plot:
 
@@ -61,7 +62,8 @@ def Total_Fit(E_plot, x_axis, data, fit_array, is_total,
         return N * np.exp(-((x - mu) / (np.sqrt(2) * sg))**2)
 
     p, c = spo.curve_fit(fit_func, x_axis, data,
-                         p0=(var_guess, mu1_guess, mu2_guess,
+                         p0=(var_guess, mu1_guess,
+                             mu2_guess if total else mu1_guess,
                              0.9, 0.1))
 
     func = fit_func(fit_array, *p)

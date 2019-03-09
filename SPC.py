@@ -20,13 +20,13 @@ if Plotting:
     core_peak = Ecore_pk if gv.E_plot else vcore_peak
     beam_peak = Ebeam_pk if gv.E_plot else vbeam_peak
     print("core, beam: ", core_peak, beam_peak)
-    var = (guess*2)**2 if gv.E_plot else 30
+    sigma = (guess*2)**2 if gv.E_plot else 30
 
     spcp.Plot(
               gv.E_plot, gv.total,
               gv.Core, gv.Plates,
               core_peak, beam_peak,
-              var, num=spcp.N)
+              sigma, num=spcp.N)
 
     stop = timeit.default_timer()
     print("time taken: ", (stop - start) / 60.0, "mins")
