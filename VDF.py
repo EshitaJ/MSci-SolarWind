@@ -35,7 +35,7 @@ R = rotationmatrix(B, np.array([0, 0, 1]))
 print("R: ", R)
 
 
-def rotatedMW(vz, vy, vx, v, is_core, n, core_fraction=0.8):
+def rotatedMW(vz, vy, vx, v, is_core, n, core_fraction):
     T_x = constants["T_x"]  # K
     T_y = constants["T_y"]
     T_z = constants["T_z"]

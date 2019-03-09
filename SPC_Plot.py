@@ -221,41 +221,41 @@ def Plot(E_plot, plot_total, is_core, plates,
         V = (U-D) / (U+D)
         W = (R-L) / (R+L)
 
-        # """Sloppy estimate of fraction of population in core"""
-        # cut_off = 840
-        # core_guess = total_quads[band_centres < cut_off]
-        # beam_guess = total_quads[band_centres > cut_off]
-        # fraction_guess = np.sum(core_guess) / np.sum(total_quads)
-        # print("Core fraction estimate: ", fraction_guess)
+        """Sloppy estimate of fraction of population in core"""
+        cut_off = 840
+        core_guess = total_quads[band_centres < cut_off]
+        beam_guess = total_quads[band_centres > cut_off]
+        fraction_guess = np.sum(core_guess) / np.sum(total_quads)
+        print("Core fraction estimate: ", fraction_guess)
 
-        # plt.plot(band_centres, V, 'xkcd:diarrhea', label='V', marker='x')
-        # plt.plot(band_centres, W, 'xkcd:hot pink', label='W', marker='x')
-        # plt.plot(band_centres, quad1/total_quads, 'k-', label='Quadrant 1')
-        # plt.plot(band_centres, quad2/total_quads, 'r-', label='Quadrant 2')
-        # plt.plot(band_centres, quad3/total_quads, 'g-', label='Quadrant 3')
-        # plt.plot(band_centres, quad4/total_quads, 'b-', label='Quadrant 4')
-        # plt.ylabel("Fractional Current")
-        # plt.plot([700, 700], [-1, 1], '--')
-        # plt.plot(band_centres, np.ones(len(band_centres)) * 0.25, '--')
+        plt.plot(band_centres, V, 'xkcd:diarrhea', label='V', marker='x')
+        plt.plot(band_centres, W, 'xkcd:hot pink', label='W', marker='x')
+        plt.plot(band_centres, quad1/total_quads, 'k-', label='Quadrant 1')
+        plt.plot(band_centres, quad2/total_quads, 'r-', label='Quadrant 2')
+        plt.plot(band_centres, quad3/total_quads, 'g-', label='Quadrant 3')
+        plt.plot(band_centres, quad4/total_quads, 'b-', label='Quadrant 4')
+        plt.ylabel("Fractional Current")
+        plt.plot([700, 700], [-1, 1], '--')
+        plt.plot(band_centres, np.ones(len(band_centres)) * 0.25, '--')
 
-        p = (1 + V) / 2
-        d = (quad1 + quad2) / total_quads
-        px = (1 + W) / 2
-        dx = (quad1 + quad4) / total_quads
-        vy_estimate = norm.ppf(p) * gv.ythermal_speed / 1e3
-        quad_estimate_vy = norm.ppf(d) * gv.ythermal_speed / 1e3
-        vx_estimate = norm.ppf(px) * gv.xthermal_speed / 1e3
-        quad_estimate_vx = norm.ppf(dx) * gv.xthermal_speed / 1e3
-        print("y average: ", np.average(vy_estimate))
-        print("x average: ", np.average(vx_estimate))
-        plt.plot(band_centres, vy_estimate, '-k', label='Using V')
-        plt.plot(band_centres, quad_estimate_vy, 'ro', label='Using quadrants 1 and 2')
-        plt.plot(band_centres, vx_estimate, '-g', label='Using W')
-        plt.plot(band_centres, quad_estimate_vx, 'bo', label='Using quadrants 1 and 4')
-        plt.plot([100, 1200], [33, 33], '--')
-        plt.plot([100, 1200], [12, 12], '--')
-        plt.plot([700, 700], [10, 35], '--')
-        plt.ylabel('Recovered solar wind bulk speed (km/s)')
+        # p = (1 + V) / 2
+        # d = (quad1 + quad2) / total_quads
+        # px = (1 + W) / 2
+        # dx = (quad1 + quad4) / total_quads
+        # vy_estimate = norm.ppf(p) * gv.ythermal_speed / 1e3
+        # quad_estimate_vy = norm.ppf(d) * gv.ythermal_speed / 1e3
+        # vx_estimate = norm.ppf(px) * gv.xthermal_speed / 1e3
+        # quad_estimate_vx = norm.ppf(dx) * gv.xthermal_speed / 1e3
+        # print("y average: ", np.average(vy_estimate))
+        # print("x average: ", np.average(vx_estimate))
+        # plt.plot(band_centres, vy_estimate, '-k', label='Using V')
+        # plt.plot(band_centres, quad_estimate_vy, 'ro', label='Using quadrants 1 and 2')
+        # plt.plot(band_centres, vx_estimate, '-g', label='Using W')
+        # plt.plot(band_centres, quad_estimate_vx, 'bo', label='Using quadrants 1 and 4')
+        # # plt.plot([100, 1200], [-1, 1], '--')
+        # # plt.plot([100, 1200], [0, 0], '--')
+        # # plt.plot([700, 700], [-75, 75], '--')
+        # plt.ylabel('Recovered solar wind bulk speed (km/s)')
 
         # plt.plot(band_centres, quad1, 'k--', label='Quadrant 1')
         # plt.plot(band_centres, quad2, 'ro', label='Quadrant 2')
@@ -277,7 +277,7 @@ def Plot(E_plot, plot_total, is_core, plates,
         # Total_Fit(E_plot, band_centres, total_quads, fit_array, True,
         # mu1_guess, mu2_guess, variance_guess)
 
-        # plt.ylabel("Current (nA)")
+        plt.ylabel("Current (nA)")
 
     else:
         if plot_total:
@@ -318,10 +318,10 @@ def Plot(E_plot, plot_total, is_core, plates,
                "\n Core velocity [%.0f, %.0f, %.0f] km/s"
                "\n %s"
                "\n %s"
-               "\n Recovered x average bulk speed"
-               "\n of $V_{x}$ = %.1f km/s"
-               "\n Recovered y average bulk speed"
-               "\n of $V_{y}$ = %.1f km/s"
+               # "\n Recovered x average bulk speed"
+               # "\n of $V_{x}$ = %.1f km/s"
+               # "\n Recovered y average bulk speed"
+               # "\n of $V_{y}$ = %.1f km/s"
                % (
                   "Perturbed" if gv.perturbed else "",
                   np.degrees(np.arctan(B[0]/B[2])),
@@ -336,7 +336,7 @@ def Plot(E_plot, plot_total, is_core, plates,
                     gv.beam_v[2]/1000) if gv.total else "",
                   "Core fraction = %0.2f"
                   "\n Rough estimate = %.02f"
-                  % (gv.core_fraction, fraction_guess) if gv.total else "",
-                  np.average(vx_estimate),
-                  np.average(vy_estimate)),
+                  % (gv.core_fraction, fraction_guess) if gv.total else ""),
+                  # np.average(vx_estimate),
+                  # np.average(vy_estimate)),
                loc='center left', bbox_to_anchor=(1, 0.5))
