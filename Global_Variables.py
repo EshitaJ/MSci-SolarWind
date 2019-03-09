@@ -4,9 +4,9 @@ import csv
 
 constants = {
     "n": 92e6,  # m^-3
-    "T_x": 2.4e5,  # K
-    "T_y": 3e5,  # K
-    "T_z": 1.7e5,  # K
+    "T_x": 1e5,  # K
+    "T_y": 1e5,  # K
+    "T_z": 1e5,  # K
     "B": 108e-9  # T
 }
 
@@ -16,9 +16,9 @@ total = False
 Core = True
 core_fraction = 0.9
 
-load = False
+load = True
 perturbed = False
-comment = 'Aberrated_'
+comment = 'Isotropic_Aberrated_'
 Rot = 'Big-deflection'
 N = 50
 print("N: ", N)
@@ -61,7 +61,7 @@ va = np.linalg.norm(B0) / np.sqrt(cst.mu_0 * constants["n"] * cst.m_p)
 
 
 # v_sw = np.array([20000, 200000, 400000])  # solar wind bulk velocity in m/s
-bulk_speed = np.array([15000, 20000, 700000])  # sw bulk velocity in m/s
+bulk_speed = np.array([12000, 33000, 700000])  # sw bulk velocity in m/s
 v_sc = np.array([0, 0, 0])  # space craft velocity in m/s
 # alfvenic fluctuation
 dv = va * (-np.cos(theta_BR) + np.cos(theta_0)) * B/np.linalg.norm(B)
