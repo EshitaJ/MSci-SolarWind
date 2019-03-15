@@ -186,7 +186,7 @@ def Plot(E_plot, plot_total, is_core, plates,
         band_width = np.diff(potential)
         fit_array = fit_array_E
         dvdE = 1  # np.sqrt(cst.m_p / (2*band_centres*gv.J))
-        print("dvDe: ", dvdE)
+        # print("dvDe: ", dvdE)
     else:
         band_centres = v_band_centres
         band_width = np.diff(vz_k)
@@ -227,7 +227,7 @@ def Plot(E_plot, plot_total, is_core, plates,
         core_guess = total_quads[band_centres < cut_off]
         beam_guess = total_quads[band_centres > cut_off]
         fraction_guess = np.sum(core_guess) / np.sum(total_quads)
-        print("Core fraction estimate: ", fraction_guess)
+        # print("Core fraction estimate: ", fraction_guess)
         plt.figure(1)
         plt.plot(band_centres, V_Tot, 'xkcd:diarrhea', label='V * Total', marker='x')
         plt.plot(band_centres, W_Tot, 'xkcd:hot pink', label='W * Total', marker='x')
@@ -300,9 +300,9 @@ def Plot(E_plot, plot_total, is_core, plates,
 
 
 
-            # quad_estimate_vx = norm.ppf(dx) * gv.xthermal_speed / 1e3
-            print("beam y average: ", np.average(vy_estimatebeam))
-            print("beam x average: ", np.average(vx_estimatebeam))
+        # # quad_estimate_vx = norm.ppf(dx) * gv.xthermal_speed / 1e3
+        # print("beam y average: ", np.average(vy_estimatebeam))
+        # print("beam x average: ", np.average(vx_estimatebeam))
 
 
     else:
@@ -319,7 +319,7 @@ def Plot(E_plot, plot_total, is_core, plates,
             core_guess = total[band_centres > cut_off]
             beam_guess = total[band_centres < cut_off]
             fraction_guess = np.sum(core_guess) / np.sum(total)
-            print("Core fraction estimate: ", fraction_guess)
+            # print("Core fraction estimate: ", fraction_guess)
 
             # can either plot total or beam stacked on core - both are same
             plt.bar(band_centres, core, width=band_width,

@@ -4,15 +4,17 @@ import csv
 import argparse
 import os
 
-if "nargparse" not in os.environ:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("perp", help="Perpendicular SW temperature, in Kelvin",
-                        type=float)
-    parser.add_argument("par", help="Parallel SW temperature, in Kelvin",
-                        type=float)
-    parser.add_argument("comment", help="Comment or notes about the specific run",
-                        type=str)
-    args = parser.parse_args()
+# if "nargparse" not in os.environ:
+parser = argparse.ArgumentParser()
+parser.add_argument("perp", help="Perpendicular SW temperature, in Kelvin",
+                    type=float)
+parser.add_argument("par", help="Parallel SW temperature, in Kelvin",
+                    type=float)
+parser.add_argument("comment", help="Comment or notes about the specific run",
+                    type=str)
+parser.add_argument("load", help="Loads data if True, creates if False",
+                    type=bool)
+args = parser.parse_args()
 
 constants = {
     "n": 92e6,  # m^-3
@@ -27,16 +29,22 @@ total = False
 Core = True
 core_fraction = 0.8 if total else 1
 
-load = False
+load = args.load
 perturbed = False
 comment = args.comment
 Rot = 'Non-radial'
 N = 60
-print("N: ", N)
+
+print("t_perp: ", constants["T_perp"])
+print("t_par: ", constants["T_par"])
+print("load: ", load)
+
 pi = np.pi
 xthermal_speed = ((cst.k * constants["T_perp"]) / cst.m_p)**0.5
 ythermal_speed = ((cst.k * constants["T_perp"]) / cst.m_p)**0.5
 zthermal_speed = ((cst.k * constants["T_par"]) / cst.m_p)**0.5
+# radial_temp = zthermal_speed**2 * (cst.m_p / cst.k)
+# print("speed, temp: ", zthermal_speed, radial_temp)
 
 B_dict = {
     1: np.array([(-0.2**0.5), (-0.3**0.5), (-0.5**0.5)]),
@@ -53,7 +61,7 @@ B_dict = {
     }
 
 B_hat = B_dict[Rot] / np.linalg.norm(B_dict[Rot])
-print("B0: ", B_hat, Rot)
+# print("B0: ", B_hat, Rot)
 B0 = B_hat * constants["B"]
 dB = constants["B"] * 1e-3 * np.array([(0.3**0.5), (0.5**0.5), (0.2**0.5)])
 # print("dB: ", dB)
@@ -80,8 +88,8 @@ v_sw = (bulk_speed + dv) if perturbed else bulk_speed
 # print("speeds: ", bulk_speed, v_sw)
 beam_v = (va * B_hat) + v_sw
 
-print("V_sw: ", v_sw)
-print("V_beam: ", beam_v)
+# print("V_sw: ", v_sw)
+# print("V_beam: ", beam_v)
 lim = 2e6  # integration limit for SPC (use instead of np.inf)
 
 """SPC has an energy measurement range of 100 eV - 8 keV
@@ -90,7 +98,7 @@ J = 1.6e-19  # multiply for ev to J conversions
 band_low = np.sqrt((2 * 100 * J) / cst.m_p)  # 138 km / s
 band_high = np.sqrt((2 * 8e3 * J) / cst.m_p)  # 1237 km / s
 sigma = np.sqrt((2 * zthermal_speed * J) / cst.m_p) / 1000
-print("sigma: ", sigma, zthermal_speed/1000)
+# print("sigma: ", sigma, zthermal_speed/1000)
 
 
 par_dict = {
@@ -152,5 +160,5 @@ filename = "./Data/%s%s%s_N_%g_Field_%s" \
                comment,
                "total" if total else "core", N, Rot)
 mydict = Param_read(filename) if load else Param_write(filename)
-if load:
-    print("dictionary B: ", mydict['Bx'], mydict['By'], mydict['Bz'])
+# if load:
+    # print("dictionary B: ", mydict['Bx'], mydict['By'], mydict['Bz'])

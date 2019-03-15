@@ -7,7 +7,7 @@ import scipy.constants as cst
 
 
 def main():
-    start = timeit.default_timer()
+    # start = timeit.default_timer()
 
     vcore_peak = gv.v_sw[2] / 1e3
     vbeam_peak = gv.beam_v[2] / 1e3
@@ -17,7 +17,7 @@ def main():
 
     core_peak = Ecore_pk if gv.E_plot else vcore_peak
     beam_peak = Ebeam_pk if gv.E_plot else vbeam_peak
-    print("core, beam: ", core_peak, beam_peak)
+    # print("core, beam: ", core_peak, beam_peak)
     sigma = (guess*2)**2 if gv.E_plot else 40
 
     data = spcp.Plot(
@@ -26,8 +26,8 @@ def main():
               core_peak, beam_peak,
               sigma, num=spcp.N)
 
-    stop = timeit.default_timer()
-    print("time taken: ", (stop - start) / 60.0, "mins")
+    # stop = timeit.default_timer()
+    # print("time taken: ", (stop - start) / 60.0, "mins")
     return data
 
 
