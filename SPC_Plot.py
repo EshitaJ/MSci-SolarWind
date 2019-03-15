@@ -279,14 +279,14 @@ def Plot(E_plot, plot_total, is_core, plates,
         n1 = 0.003
         n2 = 0.001
 
-        Total_Fit(E_plot, band_centres, quad1, fit_array, False,
-            mu1_guess, mu2_guess, variance_guess, n1, n2)
-        Total_Fit(E_plot, band_centres, quad2, fit_array, False,
-                  mu1_guess, mu2_guess, variance_guess, n1, n2)
-        Total_Fit(E_plot, band_centres, quad3, fit_array, False,
-                  mu1_guess, mu2_guess, variance_guess, n1, n2)
-        Total_Fit(E_plot, band_centres, quad4, fit_array, False,
-                  mu1_guess, mu2_guess, variance_guess, n1, n2)
+        q1 = Total_Fit(E_plot, band_centres, quad1, fit_array, False,
+                       mu1_guess, mu2_guess, variance_guess, n1, n2)
+        q2 = Total_Fit(E_plot, band_centres, quad2, fit_array, False,
+                       mu1_guess, mu2_guess, variance_guess, n1, n2)
+        q3 = Total_Fit(E_plot, band_centres, quad3, fit_array, False,
+                       mu1_guess, mu2_guess, variance_guess, n1, n2)
+        q4 = Total_Fit(E_plot, band_centres, quad4, fit_array, False,
+                       mu1_guess, mu2_guess, variance_guess, n1, n2)
         plt.legend()
 
         plt.figure(4)
@@ -394,3 +394,5 @@ def Plot(E_plot, plot_total, is_core, plates,
     #               "Recovered beam y speed of $V_{y}$ = %.2f km/s" \
     #               % np.average(vy_estimatebeam) if gv.total else ""),
     #            loc='center left', bbox_to_anchor=(1, 0.5))
+
+    return q1, q2, q3, q4

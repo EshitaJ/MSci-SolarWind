@@ -6,28 +6,35 @@ import Global_Variables as gv
 import scipy.constants as cst
 
 
-start = timeit.default_timer()
+def main():
+    start = timeit.default_timer()
 
-vcore_peak = gv.v_sw[2] / 1e3
-vbeam_peak = gv.beam_v[2] / 1e3
-Ecore_pk = (0.5 * cst.m_p * (vcore_peak*1e3)**2) / gv.J
-Ebeam_pk = (0.5 * cst.m_p * (vbeam_peak*1e3)**2) / gv.J
-guess = (0.5 * cst.m_p * (40*1e3)**2) / gv.J
+    vcore_peak = gv.v_sw[2] / 1e3
+    vbeam_peak = gv.beam_v[2] / 1e3
+    Ecore_pk = (0.5 * cst.m_p * (vcore_peak*1e3)**2) / gv.J
+    Ebeam_pk = (0.5 * cst.m_p * (vbeam_peak*1e3)**2) / gv.J
+    guess = (0.5 * cst.m_p * (40*1e3)**2) / gv.J
 
-core_peak = Ecore_pk if gv.E_plot else vcore_peak
-beam_peak = Ebeam_pk if gv.E_plot else vbeam_peak
-print("core, beam: ", core_peak, beam_peak)
-sigma = (guess*2)**2 if gv.E_plot else 30
+    core_peak = Ecore_pk if gv.E_plot else vcore_peak
+    beam_peak = Ebeam_pk if gv.E_plot else vbeam_peak
+    print("core, beam: ", core_peak, beam_peak)
+    sigma = (guess*2)**2 if gv.E_plot else 40
 
-spcp.Plot(
-          gv.E_plot, gv.total,
-          gv.Core, gv.Plates,
-          core_peak, beam_peak,
-          sigma, num=spcp.N)
+    data = spcp.Plot(
+              gv.E_plot, gv.total,
+              gv.Core, gv.Plates,
+              core_peak, beam_peak,
+              sigma, num=spcp.N)
 
-stop = timeit.default_timer()
-print("time taken: ", (stop - start) / 60.0, "mins")
-plt.show()
+    stop = timeit.default_timer()
+    print("time taken: ", (stop - start) / 60.0, "mins")
+    return data
+
+
+if __name__ == "__main__":
+    main()
+
+    plt.show()
 
 
 # def RBM(x, y):
