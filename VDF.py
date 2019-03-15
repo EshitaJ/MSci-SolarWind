@@ -35,10 +35,10 @@ R = rotationmatrix(B, np.array([0, 0, 1]))
 print("R: ", R)
 
 
-def rotatedMW(vz, vy, vx, v, is_core, n, core_fraction):
-    T_x = constants["T_perp"]  # K
-    T_y = constants["T_perp"]
-    T_z = constants["T_par"]
+def rotatedMW(vz, vy, vx, v, is_core, n, perp, par, core_fraction):
+    T_x = perp  # K
+    T_y = perp
+    T_z = par
 
     vel = np.array([-vx, -vy, -vz])  # in SPC frame, -ve due to look direction
     v_beam = beam_v

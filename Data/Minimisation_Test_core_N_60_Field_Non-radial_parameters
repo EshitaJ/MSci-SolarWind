@@ -1,0 +1,31 @@
+n,9.20E+07
+T_perp,1.7E+05
+T_par,1.7E+05
+B strength,1.08e-07
+Bx,1.0539720787844158e-08
+By,2.1079441575688316e-08
+Bz,1.0539720787844157e-07
+Bxz,5.71
+Byz,11.31
+Bulkx,15.0
+Bulky,20.0
+Bulkz,700.0
+Beamx,38.97
+Beamy,67.94
+Beamz,939.68
+SCx,0.0
+SCy,0.0
+SCz,0.0
+Alfven speed,245.5986756778914
+N,60
+Rot,Non-radial
+Perturbed,False
+dB_x,5.915403621055793e-11
+dB_y,7.636753236814714e-11
+dB_z,4.8299068313995456e-11
+dv_x,0.0
+dv_y,0.0
+dv_z,0.0
+Total,False
+Core,True
+Core fraction,1

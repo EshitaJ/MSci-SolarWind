@@ -11,10 +11,10 @@ band_centres = np.genfromtxt("./Data/Band_Centres_%s_%s_%s.csv"
                              % ("Energy" if gv.E_plot else "Velocity",
                                 "N_%g" % gv.N, "Field_%s" % gv.Rot))
 
-data1 = np.genfromtxt('%s_quad_1.csv' % gv.filename)
-data2 = np.genfromtxt('%s_quad_2.csv' % gv.filename)
-data3 = np.genfromtxt('%s_quad_3.csv' % gv.filename)
-data4 = np.genfromtxt('%s_quad_4.csv' % gv.filename)
+data1 = np.genfromtxt('%s_quad_1.csv' % filename)
+data2 = np.genfromtxt('%s_quad_2.csv' % filename)
+data3 = np.genfromtxt('%s_quad_3.csv' % filename)
+data4 = np.genfromtxt('%s_quad_4.csv' % filename)
 total_quads = data1 + data2 + data3 + data4
 fit_array = np.linspace(np.min(band_centres), np.max(band_centres), gv.N)
 

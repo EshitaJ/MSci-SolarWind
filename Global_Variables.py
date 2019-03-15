@@ -1,25 +1,11 @@
 import numpy as np
 import scipy.constants as cst
 import csv
-import argparse
 import os
 
-# if "nargparse" not in os.environ:
-parser = argparse.ArgumentParser()
-parser.add_argument("perp", help="Perpendicular SW temperature, in Kelvin",
-                    type=float)
-parser.add_argument("par", help="Parallel SW temperature, in Kelvin",
-                    type=float)
-parser.add_argument("comment", help="Comment or notes about the specific run",
-                    type=str)
-parser.add_argument("load", help="Loads data if True, creates if False",
-                    type=bool)
-args = parser.parse_args()
 
 constants = {
     "n": 92e6,  # m^-3
-    "T_perp": args.perp,  # K
-    "T_par": args.par,  # K
     "B": 108e-9  # T
 }
 
@@ -29,20 +15,16 @@ total = False
 Core = True
 core_fraction = 0.8 if total else 1
 
-load = args.load
+load = False
 perturbed = False
-comment = args.comment
-Rot = 'Non-radial'
+comment = "Realistic_SW_"
+Rot = "Non-radial"
 N = 60
 
-print("t_perp: ", constants["T_perp"])
-print("t_par: ", constants["T_par"])
-print("load: ", load)
-
 pi = np.pi
-xthermal_speed = ((cst.k * constants["T_perp"]) / cst.m_p)**0.5
-ythermal_speed = ((cst.k * constants["T_perp"]) / cst.m_p)**0.5
-zthermal_speed = ((cst.k * constants["T_par"]) / cst.m_p)**0.5
+# xthermal_speed = ((cst.k * constants["T_perp"]) / cst.m_p)**0.5
+# ythermal_speed = ((cst.k * constants["T_perp"]) / cst.m_p)**0.5
+# zthermal_speed = ((cst.k * constants["T_par"]) / cst.m_p)**0.5
 # radial_temp = zthermal_speed**2 * (cst.m_p / cst.k)
 # print("speed, temp: ", zthermal_speed, radial_temp)
 
@@ -97,68 +79,10 @@ corresponding to these velocities in m / s"""
 J = 1.6e-19  # multiply for ev to J conversions
 band_low = np.sqrt((2 * 100 * J) / cst.m_p)  # 138 km / s
 band_high = np.sqrt((2 * 8e3 * J) / cst.m_p)  # 1237 km / s
-sigma = np.sqrt((2 * zthermal_speed * J) / cst.m_p) / 1000
+# sigma = np.sqrt((2 * zthermal_speed * J) / cst.m_p) / 1000
 # print("sigma: ", sigma, zthermal_speed/1000)
 
 
-par_dict = {
-         'n': "%.2E" % constants['n'],
-         'T_perp': "%.1E" % constants['T_perp'],
-         'T_par': "%.1E" % constants['T_par'],
-         'B strength': constants["B"],
-         'Bx': B[0],
-         'By': B[1],
-         'Bz': B[2],
-         'Bxz': round(np.degrees(np.arctan(B[0]/B[2])), 2),
-         'Byz': round(np.degrees(np.arctan(B[1]/B[2])), 2),
-         'Bulkx': round(v_sw[0]/1e3, 2),
-         'Bulky': round(v_sw[1]/1e3, 2),
-         'Bulkz': round(v_sw[2]/1e3, 2),
-         'Beamx': round(beam_v[0]/1e3, 2),
-         'Beamy': round(beam_v[1]/1e3, 2),
-         'Beamz': round(beam_v[2]/1e3, 2),
-         'SCx': v_sc[0]/1e3,
-         'SCy': v_sc[1]/1e3,
-         'SCz': v_sc[2]/1e3,
-         'Alfven speed': va/1e3,
-         'N': N,
-         'Rot': Rot,
-         'Perturbed': perturbed,
-         'dB_x': dB[0],
-         'dB_y': dB[1],
-         'dB_z': dB[2],
-         'dv_x': dv[0],
-         'dv_y': dv[1],
-         'dv_z': dv[2],
-         'Total': total,
-         'Core': Core,
-         'Core fraction': core_fraction
-         }
 
-
-def Param_write(filename):
-    output = filename + '_parameters'
-    with open(output, 'w') as f:
-        for key in par_dict.keys():
-            f.write("%s,%s\n" % (key, par_dict[key]))
-    print("Saved, parameters")
-
-
-def Param_read(filename):
-    input = filename + '_parameters'
-    with open(input, mode='r') as infile:
-        reader = csv.reader(infile)
-        with open('params_new.csv', mode='w') as outfile:
-            writer = csv.writer(outfile)
-            mydict = {rows[0]: rows[1] for rows in reader}
-    # print(mydict)
-    return mydict
-
-
-filename = "./Data/%s%s%s_N_%g_Field_%s" \
-            % ("Perturbed_" if perturbed else "",
-               comment,
-               "total" if total else "core", N, Rot)
-mydict = Param_read(filename) if load else Param_write(filename)
 # if load:
     # print("dictionary B: ", mydict['Bx'], mydict['By'], mydict['Bz'])

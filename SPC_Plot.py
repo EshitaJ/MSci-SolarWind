@@ -13,12 +13,12 @@ from VDF import *
 sns.set()
 
 
-def current_vdensity(vz, vy, vx, v, is_core, n):
-    df = rotatedMW(vz, vy, vx, v, is_core, n, core_fraction)
+def current_vdensity(vz, vy, vx, v, is_core, n, perp, par):
+    df = rotatedMW(vz, vy, vx, v, is_core, n, perp, par, core_fraction)
     return cst.e * np.sqrt(vz**2 + vy**2 + vx**2) * Area(vz, vy, vx) * df
 
 
-def integrand_plate(vz, theta, phi, v_alf, n):
+def integrand_plate(vz, theta, phi, v_alf, n, perp, par):
     """integral returns the current in a given detector plate"""
     cos_theta = np.cos(theta)
     sin_theta = np.sin(theta)
@@ -33,9 +33,9 @@ def integrand_plate(vz, theta, phi, v_alf, n):
 
     if np.abs(th_x) < angular_range and np.abs(th_y) < angular_range:
         jacobian = (v ** 2) * sin_theta
-        core = current_vdensity(vz, vy, vx, v_alf, True, n)
+        core = current_vdensity(vz, vy, vx, v_alf, True, n, perp, par)
         if total:
-            beam = current_vdensity(vz, vy, vx, v_alf, False, n)
+            beam = current_vdensity(vz, vy, vx, v_alf, False, n, perp, par)
             cvd = core + beam
         else:
             cvd = core
@@ -45,12 +45,12 @@ def integrand_plate(vz, theta, phi, v_alf, n):
         return 0
 
 
-def Signal_Count(bounds, is_core, plates, plate):
+def Signal_Count(bounds, is_core, plates, plate, perp, par):
     output = []
     low = bounds[:-1]
     high = bounds[1:]
 
-    def integration(low_bound, high_bound):
+    def integration(low_bound, high_bound, perp, par):
         if plates:
             if plate == 1:
                 low_phi = -pi / 2
@@ -78,81 +78,103 @@ def Signal_Count(bounds, is_core, plates, plate):
                               lambda phi: low_theta, lambda phi: high_theta,
                               lambda phi, theta: low_bound,  # vz
                               lambda phi, theta: high_bound,
-                              args=(va, constants["n"]))
+                              args=(va, constants["n"], perp, par))
         else:
                 I_k = spi.tplquad(current_vdensity,
                                   -lim, lim,
                                   lambda x: -lim, lambda x: lim,
                                   lambda x, y: low_bound,
                                   lambda x, y: high_bound,
-                                  args=(va, is_core, constants["n"]))
+                                  args=(va, is_core, constants["n"], perp, par))
         return I_k
 
     integration = np.vectorize(integration)
-    output = np.abs(integration(low, high)[0])
+    output = np.abs(integration(low, high, perp, par)[0])
     return output
 
 
-def Data(velocities, is_core, plates, plate):
+def Data(filename, velocities, is_core, plates, plate,
+         perp, par, par_dict, load=gv.load):
+
+
     if plates:
         if plate == 1:
             if load:
-                signal = np.genfromtxt('%s_quad_1.csv' % gv.filename)
+                signal = np.genfromtxt('%s_quad_1.csv' % filename)
             else:
-                signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
+                def Param_write(filename):
+                    output = filename + '_parameters'
+                    with open(output, 'w') as f:
+                        for key in par_dict.keys():
+                            f.write("%s,%s\n" % (key, par_dict[key]))
+                    print("Saved, parameters")
 
-                np.savetxt('%s_quad_1.csv' % gv.filename, signal)
+                def Param_read(filename):
+                    input = filename + '_parameters'
+                    with open(input, mode='r') as infile:
+                        reader = csv.reader(infile)
+                        with open('params_new.csv', mode='w') as outfile:
+                            writer = csv.writer(outfile)
+                            mydict = {rows[0]: rows[1] for rows in reader}
+                    # print(mydict)
+                    return mydict
+
+                mydict = Param_read(filename) if load else Param_write(filename)
+                signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
+
+                np.savetxt('%s_quad_1.csv' % filename, signal)
                 print("Saved, quad 1 data")
         if plate == 2:
             if load:
-                signal = np.genfromtxt('%s_quad_2.csv' % gv.filename)
+                signal = np.genfromtxt('%s_quad_2.csv' % filename)
 
             else:
-                signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
+                signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                np.savetxt('%s_quad_2.csv' % gv.filename, signal)
+                np.savetxt('%s_quad_2.csv' % filename, signal)
                 print("Saved, quad 2 data")
         if plate == 3:
             if load:
-                signal = np.genfromtxt('%s_quad_3.csv' % gv.filename)
+                signal = np.genfromtxt('%s_quad_3.csv' % filename)
 
             else:
-                signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
+                signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                np.savetxt('%s_quad_3.csv' % gv.filename, signal)
+                np.savetxt('%s_quad_3.csv' % filename, signal)
                 print("Saved, quad 3 data")
         if plate == 4:
             if load:
-                signal = np.genfromtxt('%s_quad_4.csv' % gv.filename)
+                signal = np.genfromtxt('%s_quad_4.csv' % filename)
 
             else:
-                signal = Signal_Count(velocities, is_core, plates, plate) * 1e9
+                signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                np.savetxt('%s_quad_4.csv' % gv.filename, signal)
+                np.savetxt('%s_quad_4.csv' % filename, signal)
                 print("Saved, quad 4 data")
 
     else:
         if is_core:
             if load:
-                signal = np.genfromtxt('%s_core.csv' % gv.filename)
+                signal = np.genfromtxt('%s_core.csv' % filename)
             else:
-                signal = Signal_Count(velocities, True, False, plate) * 1e9
+                signal = Signal_Count(velocities, True, False, plate, perp, par) * 1e9
 
-                np.savetxt('%s_core.csv' % gv.filename, signal)
+                np.savetxt('%s_core.csv' % filename, signal)
                 print("Saved, core")
         else:
             if load:
-                signal = np.genfromtxt('%s_beam.csv' % gv.filename)
+                signal = np.genfromtxt('%s_beam.csv' % filename)
             else:
-                signal = Signal_Count(velocities, False, False, plate) * 1e9
+                signal = Signal_Count(velocities, False, False, plate, perp, par) * 1e9
 
-                np.savetxt('%s_beam.csv' % gv.filename, signal)
+                np.savetxt('%s_beam.csv' % filename, signal)
                 print("Saved, beam")
     return signal
 
 
 def Plot(E_plot, plot_total, is_core, plates,
-         mu1_guess, mu2_guess, variance_guess, num=50):
+         mu1_guess, mu2_guess, variance_guess, perp, par, par_dict,
+         load=gv.load, comment=gv.comment, num=50):
     """ @ E_plot=True plots current against Energy, and otherwise plots
     current against z-velocity;
     @ plot_total=True plots the total core+beam vdf with a double gaussian fit,
@@ -167,6 +189,12 @@ def Plot(E_plot, plot_total, is_core, plates,
     assume core and beam distributions have same width)
     @ num is number of bins, default is set to 50
     """
+
+    filename = "./Data/%s%s%s_N_%g_Field_%s" \
+        % ("Perturbed_" if gv.perturbed else "",
+            comment,
+            "total" if gv.total else "core", gv.N, gv.Rot)
+
 
     # unequal bin widths in velocity as potential is what is varied
     # for now assume equal bin widths in potential, but can change later
@@ -198,14 +226,14 @@ def Plot(E_plot, plot_total, is_core, plates,
                band_centres
                )
     print('Saved, band centres')
-
+    print("load: ", load)
     fig, ax = plt.subplots()
 
     if plates:
-        quad1 = Data(vz_m, True, True, 1)
-        quad2 = Data(vz_m, True, True, 2)
-        quad3 = Data(vz_m, True, True, 3)
-        quad4 = Data(vz_m, True, True, 4)
+        quad1 = Data(filename, vz_m, True, True, 1, perp, par, par_dict, load)
+        quad2 = Data(filename, vz_m, True, True, 2, perp, par, par_dict, load)
+        quad3 = Data(filename, vz_m, True, True, 3, perp, par, par_dict, load)
+        quad4 = Data(filename, vz_m, True, True, 4, perp, par, par_dict, load)
 
         quad1 = quad1 * dvdE if E_plot else quad1
         quad2 = quad2 * dvdE if E_plot else quad2
@@ -276,29 +304,35 @@ def Plot(E_plot, plot_total, is_core, plates,
         plt.plot(band_centres, quad3, 'gx', label='Quadrant 3')
         plt.plot(band_centres, quad4, 'b-', label='Quadrant 4')
         plt.ylabel("Current (nA)")
-        n1 = 0.003
-        n2 = 0.001
+        q1, q2, q3, q4 = 0, 0, 0, 0
+        # n = 0.1
+        #
+        # q1 = Total_Fit(E_plot, band_centres, quad1, fit_array, False,
+        #                mu1_guess, mu2_guess, variance_guess,
+        #                np.max(quad1), n*np.max(quad1))
+        # q2 = Total_Fit(E_plot, band_centres, quad2, fit_array, False,
+        #                mu1_guess, mu2_guess, variance_guess,
+        #                np.max(quad2), n*np.max(quad2))
+        # q3 = Total_Fit(E_plot, band_centres, quad3, fit_array, False,
+        #                mu1_guess, mu2_guess, variance_guess,
+        #                n*np.max(quad3), n*np.max(quad3))
+        # q4 = Total_Fit(E_plot, band_centres, quad4, fit_array, False,
+        #                mu1_guess, mu2_guess, variance_guess,
+        #                n*np.max(quad3), n*np.max(quad3))
 
-        q1 = Total_Fit(E_plot, band_centres, quad1, fit_array, False,
-                       mu1_guess, mu2_guess, variance_guess, n1, n2)
-        q2 = Total_Fit(E_plot, band_centres, quad2, fit_array, False,
-                       mu1_guess, mu2_guess, variance_guess, n1, n2)
-        q3 = Total_Fit(E_plot, band_centres, quad3, fit_array, False,
-                       mu1_guess, mu2_guess, variance_guess, n1, n2)
-        q4 = Total_Fit(E_plot, band_centres, quad4, fit_array, False,
-                       mu1_guess, mu2_guess, variance_guess, n1, n2)
         plt.legend()
 
         plt.figure(4)
         plt.plot(band_centres, total_quads, 'bx', label='Total Current')
-        Total_Fit(E_plot, band_centres, total_quads, fit_array, True,
-            mu1_guess, mu2_guess, variance_guess, 0.09, 0.01)
+
+        tf = Total_Fit(E_plot, band_centres, total_quads, fit_array, True,
+            mu1_guess, mu2_guess, variance_guess,
+            0.1*np.max(total_quads), 0.01*np.max(total_quads))
+
+        print("max: ", np.argmax(total_quads), np.max(total_quads), tf[3])
         plt.ylabel("Current (nA)")
         plt.legend()
         # plt.plot(band_centres, total_quads, label='Sum of quadrants')
-
-
-
 
         # # quad_estimate_vx = norm.ppf(dx) * gv.xthermal_speed / 1e3
         # print("beam y average: ", np.average(vy_estimatebeam))
@@ -323,9 +357,9 @@ def Plot(E_plot, plot_total, is_core, plates,
 
             # can either plot total or beam stacked on core - both are same
             plt.bar(band_centres, core, width=band_width,
-                    label="Measured core at $T_z = %g$" % constants["T_z"])
+                    label="core")
             plt.bar(band_centres, beam, width=band_width, bottom=core,
-                    label="Measured beam at $T_z = %g$" % constants["T_z"])
+                    label="beam")
 
             # Total_Fit(E_plot, band_centres, total, fit_array, True,
             #           mu1_guess, mu2_guess, variance_guess,  n1, n2)
@@ -336,30 +370,30 @@ def Plot(E_plot, plot_total, is_core, plates,
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
 
-    if load:
-        Bxz = gv.mydict['Bxz']
-        Byz = gv.mydict['Byz']
-        T_perp = gv.mydict['T_perp']
-        T_par = gv.mydict['T_par']
-        vx = gv.mydict['Bulkx']
-        vy = gv.mydict['Bulky']
-        vz = gv.mydict['Bulkz']
-        bvx = gv.mydict['Beamx']
-        bvy = gv.mydict['Beamy']
-        bvz = gv.mydict['Beamz']
-        fraction = gv.mydict['Core fraction']
-    else:
-        Bxz = round(np.degrees(np.arctan(gv.B[0]/gv.B[2])), 2)
-        Byz = round(np.degrees(np.arctan(gv.B[1]/gv.B[2])), 2)
-        T_perp = "%.1E" % constants['T_perp']
-        T_par = "%.1E" % constants['T_par']
-        vx = gv.v_sw[0]/1e3
-        vy = gv.v_sw[1]/1e3
-        vz = gv.v_sw[2]/1e3
-        bvx = gv.beam_v[0]/1e3
-        bvy = gv.beam_v[1]/1e3
-        bvz = gv.beam_v[2]/1e3
-        fraction = gv.core_fraction
+    # if load:
+    #     Bxz = mydict['Bxz']
+    #     Byz = mydict['Byz']
+    #     T_perp = mydict['T_perp']
+    #     T_par = mydict['T_par']
+    #     vx = mydict['Bulkx']
+    #     vy = mydict['Bulky']
+    #     vz = mydict['Bulkz']
+    #     bvx = mydict['Beamx']
+    #     bvy = mydict['Beamy']
+    #     bvz = mydict['Beamz']
+    #     fraction = mydict['Core fraction']
+    # else:
+    #     Bxz = round(np.degrees(np.arctan(gv.B[0]/gv.B[2])), 2)
+    #     Byz = round(np.degrees(np.arctan(gv.B[1]/gv.B[2])), 2)
+    #     T_perp = "%.1E" % constants['T_perp']
+    #     T_par = "%.1E" % constants['T_par']
+    #     vx = gv.v_sw[0]/1e3
+    #     vy = gv.v_sw[1]/1e3
+    #     vz = gv.v_sw[2]/1e3
+    #     bvx = gv.beam_v[0]/1e3
+    #     bvy = gv.beam_v[1]/1e3
+    #     bvz = gv.beam_v[2]/1e3
+    #     fraction = gv.core_fraction
 
     # print(fieldx, fieldy, fieldz)
 
@@ -395,4 +429,4 @@ def Plot(E_plot, plot_total, is_core, plates,
     #               % np.average(vy_estimatebeam) if gv.total else ""),
     #            loc='center left', bbox_to_anchor=(1, 0.5))
 
-    return q1, q2, q3, q4
+    return q1, q2, q3, q4, tf
