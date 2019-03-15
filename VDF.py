@@ -36,9 +36,9 @@ print("R: ", R)
 
 
 def rotatedMW(vz, vy, vx, v, is_core, n, core_fraction):
-    T_x = constants["T_x"]  # K
-    T_y = constants["T_y"]
-    T_z = constants["T_z"]
+    T_x = constants["T_perp"]  # K
+    T_y = constants["T_perp"]
+    T_z = constants["T_par"]
 
     vel = np.array([-vx, -vy, -vz])  # in SPC frame, -ve due to look direction
     v_beam = beam_v

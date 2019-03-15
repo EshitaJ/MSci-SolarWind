@@ -1,31 +1,42 @@
 import numpy as np
 import scipy.constants as cst
 import csv
+import argparse
+import os
+
+if "nargparse" not in os.environ:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("perp", help="Perpendicular SW temperature, in Kelvin",
+                        type=float)
+    parser.add_argument("par", help="Parallel SW temperature, in Kelvin",
+                        type=float)
+    parser.add_argument("comment", help="Comment or notes about the specific run",
+                        type=str)
+    args = parser.parse_args()
 
 constants = {
     "n": 92e6,  # m^-3
-    "T_x": 2.4e5,  # K
-    "T_y": 1.4e5,  # K
-    "T_z": 1.7e5,  # K
+    "T_perp": args.perp,  # K
+    "T_par": args.par,  # K
     "B": 108e-9  # T
 }
 
 E_plot = False
 Plates = True
-total = True
+total = False
 Core = True
 core_fraction = 0.8 if total else 1
 
-load = True
+load = False
 perturbed = False
-comment = 'Anisotropic_Aberrated_'
-Rot = 'Big-deflection'
-N = 50
+comment = args.comment
+Rot = 'Non-radial'
+N = 60
 print("N: ", N)
 pi = np.pi
-xthermal_speed = ((cst.k * constants["T_x"]) / cst.m_p)**0.5
-ythermal_speed = ((cst.k * constants["T_y"]) / cst.m_p)**0.5
-zthermal_speed = ((cst.k * constants["T_z"]) / cst.m_p)**0.5
+xthermal_speed = ((cst.k * constants["T_perp"]) / cst.m_p)**0.5
+ythermal_speed = ((cst.k * constants["T_perp"]) / cst.m_p)**0.5
+zthermal_speed = ((cst.k * constants["T_par"]) / cst.m_p)**0.5
 
 B_dict = {
     1: np.array([(-0.2**0.5), (-0.3**0.5), (-0.5**0.5)]),
@@ -61,7 +72,7 @@ va = np.linalg.norm(B0) / np.sqrt(cst.mu_0 * constants["n"] * cst.m_p)
 
 
 # v_sw = np.array([20000, 200000, 400000])  # solar wind bulk velocity in m/s
-bulk_speed = np.array([13000, 17000, 700000])  # sw bulk velocity in m/s
+bulk_speed = np.array([15000, 20000, 700000])  # sw bulk velocity in m/s
 v_sc = np.array([0, 0, 0])  # space craft velocity in m/s
 # alfvenic fluctuation
 dv = va * (-np.cos(theta_BR) + np.cos(theta_0)) * B/np.linalg.norm(B)
@@ -83,21 +94,34 @@ print("sigma: ", sigma, zthermal_speed/1000)
 
 
 par_dict = {
-         'n': constants['n'],
-         'T_x': constants['T_x'],
-         'T_y': constants['T_y'],
-         'T_z': constants['T_z'],
+         'n': "%.2E" % constants['n'],
+         'T_perp': "%.1E" % constants['T_perp'],
+         'T_par': "%.1E" % constants['T_par'],
          'B strength': constants["B"],
-         'B field': B,
-         'Bulk velocity': v_sw,
-         'Beam velocity': beam_v,
-         'Spacecraft velocity': v_sc,
-         'Alfven speed': va,
+         'Bx': B[0],
+         'By': B[1],
+         'Bz': B[2],
+         'Bxz': round(np.degrees(np.arctan(B[0]/B[2])), 2),
+         'Byz': round(np.degrees(np.arctan(B[1]/B[2])), 2),
+         'Bulkx': round(v_sw[0]/1e3, 2),
+         'Bulky': round(v_sw[1]/1e3, 2),
+         'Bulkz': round(v_sw[2]/1e3, 2),
+         'Beamx': round(beam_v[0]/1e3, 2),
+         'Beamy': round(beam_v[1]/1e3, 2),
+         'Beamz': round(beam_v[2]/1e3, 2),
+         'SCx': v_sc[0]/1e3,
+         'SCy': v_sc[1]/1e3,
+         'SCz': v_sc[2]/1e3,
+         'Alfven speed': va/1e3,
          'N': N,
          'Rot': Rot,
          'Perturbed': perturbed,
-         'dB': dB,
-         'dv': dv,
+         'dB_x': dB[0],
+         'dB_y': dB[1],
+         'dB_z': dB[2],
+         'dv_x': dv[0],
+         'dv_y': dv[1],
+         'dv_z': dv[2],
          'Total': total,
          'Core': Core,
          'Core fraction': core_fraction
@@ -129,4 +153,4 @@ filename = "./Data/%s%s%s_N_%g_Field_%s" \
                "total" if total else "core", N, Rot)
 mydict = Param_read(filename) if load else Param_write(filename)
 if load:
-    print(mydict['n'])
+    print("dictionary B: ", mydict['Bx'], mydict['By'], mydict['Bz'])

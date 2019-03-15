@@ -172,8 +172,7 @@ def Plot(E_plot, plot_total, is_core, plates,
     # for now assume equal bin widths in potential, but can change later
     potential = np.linspace(100, 8000, int(num))
     vz_m = np.sqrt((2 * potential * J) / cst.m_p)  # z velocity in m/s
-    # vz_m = vz_m[vz_m < 1100000]
-    # vz_m = vz_m[vz_m > 500000]
+    # vz_m = np.linspace(650000, 750000, int(num))
     vz_k = vz_m / 1e3  # velocity in km/s for plotting purposes
 
     v_band_centres = (vz_k[:-1] + vz_k[1:]) / 2.0
@@ -220,6 +219,8 @@ def Plot(E_plot, plot_total, is_core, plates,
         total_quads = quad1 + quad2 + quad3 + quad4
         V = (U-D) / (U+D)
         W = (R-L) / (R+L)
+        V_Tot = V*total_quads
+        W_Tot = W*total_quads
 
         """Sloppy estimate of fraction of population in core"""
         cut_off = 840
@@ -227,20 +228,31 @@ def Plot(E_plot, plot_total, is_core, plates,
         beam_guess = total_quads[band_centres > cut_off]
         fraction_guess = np.sum(core_guess) / np.sum(total_quads)
         print("Core fraction estimate: ", fraction_guess)
+        plt.figure(1)
+        plt.plot(band_centres, V_Tot, 'xkcd:diarrhea', label='V * Total', marker='x')
+        plt.plot(band_centres, W_Tot, 'xkcd:hot pink', label='W * Total', marker='x')
+        Fit(E_plot, band_centres, V_Tot, fit_array,
+            mu1_guess, variance_guess, 0.1)
+        Fit(E_plot, band_centres, W_Tot, fit_array,
+            mu1_guess, variance_guess, 0.1)
+        plt.ylabel("Current Difference (nA)")
+        plt.legend()
 
-        plt.plot(band_centres, V, 'xkcd:diarrhea', label='V', marker='x')
-        plt.plot(band_centres, W, 'xkcd:hot pink', label='W', marker='x')
+        plt.figure(2)
+        plt.plot(band_centres, V, 'xkcd:diarrhea', label='V')
+        plt.plot(band_centres, W, 'xkcd:hot pink', label='W')
         plt.plot(band_centres, quad1/total_quads, 'k-', label='Quadrant 1')
         plt.plot(band_centres, quad2/total_quads, 'r-', label='Quadrant 2')
         plt.plot(band_centres, quad3/total_quads, 'g-', label='Quadrant 3')
         plt.plot(band_centres, quad4/total_quads, 'b-', label='Quadrant 4')
         plt.ylabel("Fractional Current")
-        plt.plot([700, 700], [-1, 1], '--')
-        plt.plot(band_centres, np.ones(len(band_centres)) * 0.25, '--')
+        plt.legend()
+        # plt.plot([700, 700], [-1, 1], '--')
+        # plt.plot(band_centres, np.ones(len(band_centres)) * 0.25, '--')
 
-        # p = (1 + V) / 2
+        # p = (1 + V[np.argmax(total_quads)]) / 2
         # d = (quad1 + quad2) / total_quads
-        # px = (1 + W) / 2
+        # px = (1 + W[np.argmax(total_quads)]) / 2
         # dx = (quad1 + quad4) / total_quads
         # vy_estimate = norm.ppf(p) * gv.ythermal_speed / 1e3
         # quad_estimate_vy = norm.ppf(d) * gv.ythermal_speed / 1e3
@@ -248,36 +260,50 @@ def Plot(E_plot, plot_total, is_core, plates,
         # quad_estimate_vx = norm.ppf(dx) * gv.xthermal_speed / 1e3
         # print("y average: ", np.average(vy_estimate))
         # print("x average: ", np.average(vx_estimate))
+
         # plt.plot(band_centres, vy_estimate, '-k', label='Using V')
         # plt.plot(band_centres, quad_estimate_vy, 'ro', label='Using quadrants 1 and 2')
         # plt.plot(band_centres, vx_estimate, '-g', label='Using W')
         # plt.plot(band_centres, quad_estimate_vx, 'bo', label='Using quadrants 1 and 4')
-        # # plt.plot([100, 1200], [-1, 1], '--')
-        # # plt.plot([100, 1200], [0, 0], '--')
-        # # plt.plot([700, 700], [-75, 75], '--')
+        # plt.plot([100, 1200], [-1, 1], '--')
+        # plt.plot([100, 1200], [0, 0], '--')
+        # plt.plot([700, 700], [-75, 75], '--')
         # plt.ylabel('Recovered solar wind bulk speed (km/s)')
 
-        # plt.plot(band_centres, quad1, 'k--', label='Quadrant 1')
-        # plt.plot(band_centres, quad2, 'ro', label='Quadrant 2')
-        # plt.plot(band_centres, quad3, 'gx', label='Quadrant 3')
-        # plt.plot(band_centres, quad4, 'b-', label='Quadrant 4')
-        # plt.plot(band_centres, total_quads, 'bx', label='Total Current')
+        plt.figure(3)
+        plt.plot(band_centres, quad1, 'k--', label='Quadrant 1')
+        plt.plot(band_centres, quad2, 'ro', label='Quadrant 2')
+        plt.plot(band_centres, quad3, 'gx', label='Quadrant 3')
+        plt.plot(band_centres, quad4, 'b-', label='Quadrant 4')
+        plt.ylabel("Current (nA)")
+        n1 = 0.003
+        n2 = 0.001
 
-        # Total_Fit(E_plot, band_centres, quad1, fit_array, True,
-        # mu1_guess, mu2_guess, variance_guess)
-        # Total_Fit(E_plot, band_centres, quad2, fit_array, True,
-        #           mu1_guess, mu2_guess, variance_guess)
-        # Total_Fit(E_plot, band_centres, quad3, fit_array, True,
-        #           mu1_guess, mu2_guess, variance_guess)
-        # Total_Fit(E_plot, band_centres, quad4, fit_array, True,
-        #           mu1_guess, mu2_guess, variance_guess)
+        Total_Fit(E_plot, band_centres, quad1, fit_array, False,
+            mu1_guess, mu2_guess, variance_guess, n1, n2)
+        Total_Fit(E_plot, band_centres, quad2, fit_array, False,
+                  mu1_guess, mu2_guess, variance_guess, n1, n2)
+        Total_Fit(E_plot, band_centres, quad3, fit_array, False,
+                  mu1_guess, mu2_guess, variance_guess, n1, n2)
+        Total_Fit(E_plot, band_centres, quad4, fit_array, False,
+                  mu1_guess, mu2_guess, variance_guess, n1, n2)
+        plt.legend()
 
+        plt.figure(4)
+        plt.plot(band_centres, total_quads, 'bx', label='Total Current')
+        Total_Fit(E_plot, band_centres, total_quads, fit_array, True,
+            mu1_guess, mu2_guess, variance_guess, 0.09, 0.01)
+        plt.ylabel("Current (nA)")
+        plt.legend()
         # plt.plot(band_centres, total_quads, label='Sum of quadrants')
 
-        # Total_Fit(E_plot, band_centres, total_quads, fit_array, True,
-        # mu1_guess, mu2_guess, variance_guess)
 
-        plt.ylabel("Current (nA)")
+
+
+            # quad_estimate_vx = norm.ppf(dx) * gv.xthermal_speed / 1e3
+            print("beam y average: ", np.average(vy_estimatebeam))
+            print("beam x average: ", np.average(vx_estimatebeam))
+
 
     else:
         if plot_total:
@@ -302,7 +328,7 @@ def Plot(E_plot, plot_total, is_core, plates,
                     label="Measured beam at $T_z = %g$" % constants["T_z"])
 
             # Total_Fit(E_plot, band_centres, total, fit_array, True,
-            #           mu1_guess, mu2_guess, variance_guess)
+            #           mu1_guess, mu2_guess, variance_guess,  n1, n2)
             plt.ylabel("Current (nA)")
 
     xlabel = "{x}".format(x="Energy (eV)" if E_plot else "$V_z$ (km/s)")
@@ -310,33 +336,61 @@ def Plot(E_plot, plot_total, is_core, plates,
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
 
-    plt.legend(title="%s B field at (%g$^\\circ$, %g$^\\circ$)"
-               "\n from SPC normal"
-               "\n Tx = %.1E K"
-               "\n Ty = %.1E K"
-               "\n Tz = %.1E K"
-               "\n Core velocity [%.0f, %.0f, %.0f] km/s"
-               "\n %s"
-               "\n %s"
-               # "\n Recovered x average bulk speed"
-               # "\n of $V_{x}$ = %.1f km/s"
-               # "\n Recovered y average bulk speed"
-               # "\n of $V_{y}$ = %.1f km/s"
-               % (
-                  "Perturbed" if gv.perturbed else "",
-                  np.degrees(np.arctan(B[0]/B[2])),
-                  np.degrees(np.arctan(B[1]/B[2])),
-                  constants["T_x"],
-                  constants["T_y"],
-                  constants["T_z"],
-                  gv.v_sw[0]/1e3, gv.v_sw[1]/1e3, gv.v_sw[2]/1e3,
-                  "Beam velocity [%.0f, %.0f, %.0f] km/s" % (
-                    gv.beam_v[0]/1000,
-                    gv.beam_v[1]/1000,
-                    gv.beam_v[2]/1000) if gv.total else "",
-                  "Core fraction = %0.2f"
-                  "\n Rough estimate = %.02f"
-                  % (gv.core_fraction, fraction_guess) if gv.total else ""),
-                  # np.average(vx_estimate),
-                  # np.average(vy_estimate)),
-               loc='center left', bbox_to_anchor=(1, 0.5))
+    if load:
+        Bxz = gv.mydict['Bxz']
+        Byz = gv.mydict['Byz']
+        T_perp = gv.mydict['T_perp']
+        T_par = gv.mydict['T_par']
+        vx = gv.mydict['Bulkx']
+        vy = gv.mydict['Bulky']
+        vz = gv.mydict['Bulkz']
+        bvx = gv.mydict['Beamx']
+        bvy = gv.mydict['Beamy']
+        bvz = gv.mydict['Beamz']
+        fraction = gv.mydict['Core fraction']
+    else:
+        Bxz = round(np.degrees(np.arctan(gv.B[0]/gv.B[2])), 2)
+        Byz = round(np.degrees(np.arctan(gv.B[1]/gv.B[2])), 2)
+        T_perp = "%.1E" % constants['T_perp']
+        T_par = "%.1E" % constants['T_par']
+        vx = gv.v_sw[0]/1e3
+        vy = gv.v_sw[1]/1e3
+        vz = gv.v_sw[2]/1e3
+        bvx = gv.beam_v[0]/1e3
+        bvy = gv.beam_v[1]/1e3
+        bvz = gv.beam_v[2]/1e3
+        fraction = gv.core_fraction
+
+    # print(fieldx, fieldy, fieldz)
+
+    # plt.legend(title="%s B field at (%s$^\\circ$, %s$^\\circ$)"
+    #            "\n from SPC normal"
+    #            "\n $T_{\perp}$ = %s K"
+    #            "\n $T_{\par}$ = %s K"
+    #            "\n Core velocity [%s, %s, %s] km/s"
+    #            "\n Recovered x bulk speed"
+    #            "\n of $V_{x}$ = %.2f km/s"
+    #            "\n Recovered y bulk speed"
+    #            "\n of $V_{y}$ = %.2f km/s"
+    #             "\n %s"
+    #             "\n %s"
+    #             "\n %s"
+    #             "\n %s"
+    #             "\n %s"
+    #            % (
+    #               "Perturbed" if gv.perturbed else "",
+    #               Bxz, Byz,
+    #               T_perp,
+    #               T_par,
+    #               vx, vy, vz,
+    #               np.average(vx_estimate),
+    #               np.average(vy_estimate),
+    #               "Beam velocity [%s, %s, %s] km/s" % (
+    #                 bvx, bvy, bvz) if gv.total else "",
+    #               "Core fraction = %s" % (fraction) if gv.total else "",
+    #               "Rough estimate = %s" % (fraction_guess) if gv.total else "",
+    #               "Recovered beam x speed of $V_{x}$ = %.2f km/s" \
+    #               % np.average(vx_estimatebeam) if gv.total else "",
+    #               "Recovered beam y speed of $V_{y}$ = %.2f km/s" \
+    #               % np.average(vy_estimatebeam) if gv.total else ""),
+    #            loc='center left', bbox_to_anchor=(1, 0.5))
