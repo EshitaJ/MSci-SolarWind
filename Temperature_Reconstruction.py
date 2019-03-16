@@ -67,7 +67,7 @@ def cost_func(t_perp_guess, t_par_guess):
     return cost
 
 
-temps = np.linspace(0.5e5, 4.5e5, 4).tolist()
+temps = np.linspace(0.5e5, 4.5e5, 2).tolist()
 temp_combos = list(itertools.product(temps, temps))
 indices = list(range(len(temp_combos)))
 # perp_array = np.linspace(0.5e5, 4e5, 1e2)
@@ -86,12 +86,12 @@ with mp.Pool() as pool:
         F.flat[i] = c
         print("\033[92mCompleted %d of %d\033[0m" % (i + 1, len(temp_combos)))
 
-plt.imshow(F)
-plt.colorbar(label="Cost function")
-plt.xlabel(r"$T_\rm{par}$")
-plt.ylabel(r"$T_\rm{perp}$")
-plt.savefig("heatmap.png")
-plt.show()
+fig = plt.figure("cost function map")
+mappable = fig.gca().imshow(F, extent=[min(temps), max(temps), min(temps), max(temps)])
+fig.colorbar(mappable, label="Cost function")
+fig.gca().set_xlabel("$T_{par}$")
+fig.gca().set_ylabel("$T_{perp}$")
+fig.savefig("heatmap.png")
 
 
 def grad_descent(coeff, t_estimate):
