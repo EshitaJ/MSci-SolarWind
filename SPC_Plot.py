@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import seaborn as sns
+# import seaborn as sns
 import matplotlib.pyplot as plt
 import scipy.integrate as spi
 import scipy.constants as cst
@@ -10,7 +10,7 @@ from scipy.stats import norm
 import Global_Variables as gv
 from SPC_Plates import *
 from VDF import *
-sns.set()
+# sns.set()
 
 
 def current_vdensity(vz, vy, vx, v, is_core, n, perp, par):
