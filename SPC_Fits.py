@@ -5,8 +5,6 @@ import scipy.integrate as spi
 import matplotlib.pyplot as plt
 from Global_Variables import *
 from scipy.signal import find_peaks
-import seaborn as sns
-sns.set()
 
 
 def Fit(E_plot, x_axis, data, fit_array, mu_guess, sg_guess, n_guess):
