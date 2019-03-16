@@ -67,18 +67,27 @@ def cost_func(t_perp_guess, t_par_guess):
     return cost
 
 
-temps = np.linspace(0.5e5, 4.5e5, 2).tolist()
+temps = np.linspace(0.5e5, 4.5e5, 6).tolist()
 temp_combos = list(itertools.product(temps, temps))
 indices = list(range(len(temp_combos)))
 # perp_array = np.linspace(0.5e5, 4e5, 1e2)
 # par_array = np.linspace(0.5e5, 4e5, 1e2)
 F = np.zeros((len(temps), len(temps)))
 
+nsamples = 2 ** 10
+cmap = plt.cm.get_cmap('copper', nsamples)
+newcolors = cmap(np.linspace(0, 1, nsamples))
+newcolors[0] = [1.0, 1.0, 1.0, 1.0]
+newcmp = matplotlib.colors.ListedColormap(newcolors)
+
 
 def cost_func_wrapper(args):
     t_perp = args[0]
     t_para = args[1]
-    return cost_func(t_perp, t_para)
+    try:
+        return cost_func(t_perp, t_para)
+    except RuntimeError:
+        return 0
 
 
 with mp.Pool() as pool:
@@ -87,7 +96,7 @@ with mp.Pool() as pool:
         print("\033[92mCompleted %d of %d\033[0m" % (i + 1, len(temp_combos)))
 
 fig = plt.figure("cost function map")
-mappable = fig.gca().imshow(F, extent=[min(temps), max(temps), min(temps), max(temps)])
+mappable = fig.gca().imshow(F, extent=[min(temps), max(temps), min(temps), max(temps)], cmap=cmap)
 fig.colorbar(mappable, label="Cost function")
 fig.gca().set_xlabel("$T_{par}$")
 fig.gca().set_ylabel("$T_{perp}$")
