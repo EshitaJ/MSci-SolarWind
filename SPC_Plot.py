@@ -226,7 +226,6 @@ def Plot(E_plot, plot_total, is_core, plates,
                band_centres
                )
     print('Saved, band centres')
-    print("load: ", load)
     fig, ax = plt.subplots()
 
     if plates:
