@@ -67,7 +67,7 @@ def cost_func(t_perp_guess, t_par_guess):
     return cost
 
 
-temps = np.linspace(0.5e5, 4.5e5, 6).tolist()
+temps = np.linspace(0.5e5, 4.5e5, 2).tolist()
 temp_combos = list(itertools.product(temps, temps))
 indices = list(range(len(temp_combos)))
 # perp_array = np.linspace(0.5e5, 4e5, 1e2)
@@ -75,7 +75,7 @@ indices = list(range(len(temp_combos)))
 F = np.zeros((len(temps), len(temps)))
 
 nsamples = 2 ** 10
-cmap = plt.cm.get_cmap('copper', nsamples)
+cmap = plt.cm.get_cmap('Blues', nsamples)
 newcolors = cmap(np.linspace(0, 1, nsamples))
 newcolors[0] = [1.0, 1.0, 1.0, 1.0]
 newcmp = matplotlib.colors.ListedColormap(newcolors)
@@ -96,10 +96,11 @@ with mp.Pool() as pool:
         print("\033[92mCompleted %d of %d\033[0m" % (i + 1, len(temp_combos)))
 
 fig = plt.figure("cost function map")
+plt.figure("decoy")
 mappable = fig.gca().imshow(F, extent=[min(temps), max(temps), min(temps), max(temps)], cmap=cmap)
 fig.colorbar(mappable, label="Cost function")
-fig.gca().set_xlabel("$T_{par}$")
-fig.gca().set_ylabel("$T_{perp}$")
+fig.gca().set_xlabel(r"$T_{\rm{par}}$")
+fig.gca().set_ylabel(r"$T_{\rm{perp}}$")
 fig.savefig("heatmap.png")
 
 
