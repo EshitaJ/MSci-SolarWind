@@ -1,10 +1,11 @@
 import matplotlib
 matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 import numpy as np
 import SPC
 import SPC_Fits as spcf
 import Global_Variables as gv
-import collections
+import itertools
 import multiprocessing as mp
 
 filename = "./Data/%s%s%s_N_%g_Field_%s" \
@@ -66,10 +67,31 @@ def cost_func(t_perp_guess, t_par_guess):
     return cost
 
 
+temps = np.linspace(0.5e5, 4.5e5, 4).tolist()
+temp_combos = list(itertools.product(temps, temps))
+indices = list(range(len(temp_combos)))
+# perp_array = np.linspace(0.5e5, 4e5, 1e2)
+# par_array = np.linspace(0.5e5, 4e5, 1e2)
+F = np.zeros((len(temps), len(temps)))
+
+
 def cost_func_wrapper(args):
     t_perp = args[0]
     t_para = args[1]
     return cost_func(t_perp, t_para)
+
+
+with mp.Pool() as pool:
+    for i, c in enumerate(pool.imap(cost_func_wrapper, temp_combos)):
+        F.flat[i] = c
+        print("\033[92mCompleted %d of %d\033[0m" % (i + 1, len(temp_combos)))
+
+plt.imshow(F)
+plt.colorbar(label="Cost function")
+plt.xlabel(r"$T_\rm{par}$")
+plt.ylabel(r"$T_\rm{perp}$")
+plt.savefig("heatmap.png")
+plt.show()
 
 
 def grad_descent(coeff, t_estimate):
@@ -104,7 +126,7 @@ def grad_descent(coeff, t_estimate):
     epsilon = 0.01
 
     while error > epsilon:
-        T_new, T_old = T_old + np.dot(coeff, grad_cost(0.1, T_old)), T_new
+        T_new, T_old = T_old + np.dot(coeff, grad_cost(0.01, T_old)), T_new
         error = np.linalg.norm((T_new - T_old)**2) / np.linalg.norm((T_old)**2)
         print("error: ", error)
         print("iteration: ", iteration)
@@ -115,4 +137,4 @@ def grad_descent(coeff, t_estimate):
     return(T_new)
 
 
-grad_descent(np.array([1e8, 1e6]), radial_temp)
+# grad_descent(np.array([1e8, 1e2]), radial_temp)

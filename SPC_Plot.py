@@ -122,7 +122,7 @@ def Data(filename, velocities, is_core, plates, plate,
                 mydict = Param_read(filename) if load else Param_write(filename)
                 signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                np.savetxt('%s_quad_1.csv' % filename, signal)
+                # np.savetxt('%s_quad_1.csv' % filename, signal)
                 print("Saved, quad 1 data")
         if plate == 2:
             if load:
@@ -131,7 +131,7 @@ def Data(filename, velocities, is_core, plates, plate,
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                np.savetxt('%s_quad_2.csv' % filename, signal)
+                # np.savetxt('%s_quad_2.csv' % filename, signal)
                 print("Saved, quad 2 data")
         if plate == 3:
             if load:
@@ -140,7 +140,7 @@ def Data(filename, velocities, is_core, plates, plate,
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                np.savetxt('%s_quad_3.csv' % filename, signal)
+                # np.savetxt('%s_quad_3.csv' % filename, signal)
                 print("Saved, quad 3 data")
         if plate == 4:
             if load:
@@ -149,7 +149,7 @@ def Data(filename, velocities, is_core, plates, plate,
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                np.savetxt('%s_quad_4.csv' % filename, signal)
+                # np.savetxt('%s_quad_4.csv' % filename, signal)
                 print("Saved, quad 4 data")
 
     else:
@@ -324,10 +324,10 @@ def Plot(E_plot, plot_total, is_core, plates,
 
         plt.figure(4)
         plt.plot(band_centres, total_quads, 'bx', label='Total Current')
-
+        n = 0.1 if par > 3e5 else 0.01
         tf = Total_Fit(E_plot, band_centres, total_quads, fit_array, True,
             mu1_guess, mu2_guess, variance_guess,
-            0.1*np.max(total_quads), 0.01*np.max(total_quads))
+            n*np.max(total_quads), 0.1*n*np.max(total_quads))
 
         print("max: ", np.argmax(total_quads), np.max(total_quads), tf[3])
         plt.ylabel("Current (nA)")
