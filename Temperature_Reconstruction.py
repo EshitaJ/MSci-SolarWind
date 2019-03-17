@@ -50,7 +50,7 @@ def cost_func(t_perp_guess, t_par_guess):
     comment = "Minimisation_Test_"
     # get estimated values
     load = False
-    estimated_data = SPC.main(t_perp_guess, t_par_guess, comment, load)
+    estimated_data = SPC.main(t_perp_guess, 1.73e5, comment, load)
     tf = estimated_data[4]
     mu_estimate, sg_estimate = tf[0], tf[3]
     # mu2_estimate, sg2_estimate = quad2[0], np.abs(quad2[3])
@@ -67,20 +67,6 @@ def cost_func(t_perp_guess, t_par_guess):
     return cost
 
 
-temps = np.linspace(1e5, 4e5, 8).tolist()
-temp_combos = list(itertools.product(temps, temps))
-indices = list(range(len(temp_combos)))
-# perp_array = np.linspace(0.5e5, 4e5, 1e2)
-# par_array = np.linspace(0.5e5, 4e5, 1e2)
-F = np.zeros((len(temps), len(temps)))
-
-nsamples = 2 ** 16
-cmap = plt.cm.get_cmap('Blues', nsamples)
-newcolors = cmap(np.linspace(0, 1, nsamples))
-newcolors[0] = [1.0, 1.0, 1.0, 1.0]
-newcmp = matplotlib.colors.ListedColormap(newcolors)
-
-
 def cost_func_wrapper(args):
     t_perp = args[0]
     t_para = args[1]
@@ -90,21 +76,36 @@ def cost_func_wrapper(args):
         return 0
 
 
-with mp.Pool() as pool:
-    for i, c in enumerate(pool.imap(cost_func_wrapper, temp_combos)):
-        F.flat[i] = c
-        print("\033[92mCompleted %d of %d\033[0m" % (i + 1, len(temp_combos)))
-        if c == 0:
-            print("\033[91mFailed to converge sensibly for %d\033[0m" % (i + 1))
+def heatmap():
+    temps = np.linspace(1e5, 4e5, 8).tolist()
+    temp_combos = list(itertools.product(temps, temps))
+    indices = list(range(len(temp_combos)))
+    # perp_array = np.linspace(0.5e5, 4e5, 1e2)
+    # par_array = np.linspace(0.5e5, 4e5, 1e2)
+    F = np.zeros((len(temps), len(temps)))
 
-F[F == 0] = np.amax(F)
-fig = plt.figure("cost function map")
-plt.figure("decoy")
-mappable = fig.gca().imshow(F, extent=[min(temps), max(temps), min(temps), max(temps)], cmap=cmap, norm=matplotlib.colors.LogNorm(np.amin(F), np.amax(F)))
-fig.colorbar(mappable, label="Cost function")
-fig.gca().set_xlabel(r"$T_{\rm{par}}$")
-fig.gca().set_ylabel(r"$T_{\rm{perp}}$")
-fig.savefig("heatmap.png")
+    nsamples = 2 ** 16
+    cmap = plt.cm.get_cmap('Blues', nsamples)
+    newcolors = cmap(np.linspace(0, 1, nsamples))
+    newcolors[0] = [1.0, 1.0, 1.0, 1.0]
+    newcmp = matplotlib.colors.ListedColormap(newcolors)
+
+
+    with mp.Pool() as pool:
+        for i, c in enumerate(pool.imap(cost_func_wrapper, temps)):
+            F.flat[i] = c
+            print("\033[92mCompleted %d of %d\033[0m" % (i + 1, len(temps)))
+            if c == 0:
+                print("\033[91mFailed to converge sensibly for %d\033[0m" % (i + 1))
+
+    F[F == 0] = np.amax(F)
+    fig = plt.figure("cost function map")
+    plt.figure("decoy")
+    mappable = fig.gca().imshow(F, extent=[min(temps), max(temps), min(temps), max(temps)], cmap=cmap, norm=matplotlib.colors.LogNorm(np.amin(F), np.amax(F)))
+    fig.colorbar(mappable, label="Cost function")
+    fig.gca().set_xlabel(r"$T_{\rm{par}}$")
+    fig.gca().set_ylabel(r"$T_{\rm{perp}}$")
+    fig.savefig("heatmap.png")
 
 
 def grad_descent(coeff, t_estimate):
@@ -112,18 +113,17 @@ def grad_descent(coeff, t_estimate):
     def grad_cost(delta, t):
         with mp.Pool(3) as pool:
             t_perp_est, t_par_est = t
+            print("perp, par: ", t_perp_est, t_par_est)
             delta_t_perp = t_perp_est + delta*t_perp_est
-            delta_t_par = t_par_est + delta*t_par_est
+            delta_t_par = t_par_est + 0.001*delta*t_par_est
             print("Delta: ", delta_t_perp, delta_t_par)
 
             results = tuple(pool.imap(cost_func_wrapper, [
                 (t_perp_est, t_par_est),
-                (t_perp_est + delta_t_perp, t_par_est),
-                (t_perp_est, t_par_est + delta_t_par)
+                (delta_t_perp, t_par_est),
+                (t_perp_est, delta_t_par)
             ]))
             cf, cf_perp, cf_par = results
-
-        cf = cost_func(t_perp_est, t_par_est)
 
         grad_cost_perp = (cf_perp - cf) / (delta * t_perp_est)
         grad_cost_par = (cf_par - cf) / (delta * t_par_est)
@@ -134,20 +134,44 @@ def grad_descent(coeff, t_estimate):
     T_0 = np.array([t_estimate, t_estimate])  # perp, par
     T_old = T_0
     T_new = T_old
+    T_list_perp = [T_0[0]]
+    T_list_par = [T_0[1]]
     error = np.inf
     iteration = 0
-    epsilon = 0.01
+    iter_list = [iteration]
+    epsilon = 0.01  # 5% error
 
     while error > epsilon:
-        T_new, T_old = T_old + np.dot(coeff, grad_cost(0.01, T_old)), T_new
+        cost_grad_vec = grad_cost(0.1, T_old)
+        print("BEFORE T_old, T_new:", T_old, T_new)
+        T_new, T_old = (T_new - coeff * cost_grad_vec, T_new)
+        print("AFTER  T_old, T_new:", T_old, T_new)
+        T_list_perp.append(T_new[0])
+        T_list_par.append(T_new[1])
+
         error = np.linalg.norm((T_new - T_old)**2) / np.linalg.norm((T_old)**2)
         print("error: ", error)
         print("iteration: ", iteration)
         print("perp, par: ", T_new)
+        print("cost_grad_vec", cost_grad_vec)
+        print("change", coeff * cost_grad_vec)
+        print("predicted new T_new", coeff * cost_grad_vec)
+        print("")
         iteration += 1
+        iter_list.append(iteration)
 
     print("final perp, par: ", T_new)
+    fig2 = plt.figure("Iterative Temperature Reconstruction")
+    fig2.gca().plot(iter_list, T_list_par, marker='x', label=r"$T_{\parallel}$")
+    fig2.gca().plot(iter_list, T_list_perp, marker='x', label=r"$T_{\perp}$")
+    fig2.gca().plot([0, 2], [2.4e5, 2.4e5], 'b--', label=r"$True T_{\perp}$")
+    fig2.gca().plot([0, 2], [1.7e5, 1.7e5], 'b--', label=r"$True T_{\parallel}$")
+    fig2.gca().set_xlabel("Number of iterations")
+    fig2.gca().set_ylabel("Reconstructed Temperature")
+    fig2.gca().legend()
+    fig2.savefig("temp_recon.png")
     return(T_new)
 
 
-# grad_descent(np.array([1e8, 1e2]), radial_temp)
+grad_descent(np.array([5e11, 1e2]), radial_temp)
+# heatmap()
