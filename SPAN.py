@@ -597,6 +597,9 @@ class SPAN:
         colours = ['b', 'y', 'tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
                    'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
 
+        par_fig = plt.figure()
+        perp_fig = plt.figure()
+
         if direction is 'both' or 'parallel':
             parallel_x = scale_array*B_nm_x
             parallel_y = scale_array*B_nm_y
@@ -648,11 +651,11 @@ class SPAN:
                                                  phi_high=high_phi_arr[phi])
                     count_array[n] = value
 
-                if not all(count_array < noise_filter_fraction*brightest_count):
+                if any(count_array > noise_filter_fraction*brightest_count):
                     if plot_temperatures:
-                        plt.plot(v_mid_arr_km[count_array != 0], count_array[count_array != 0],
-                                 marker='o', label='Measured: Theta %i, Phi %i' % (theta, phi),
-                                 alpha=0.5, color=colours[colour_index])
+                        par_fig.plot(v_mid_arr_km[count_array != 0], count_array[count_array != 0],
+                                     marker='o', label='Measured: Theta %i, Phi %i' % (theta, phi),
+                                     alpha=0.5, color=colours[colour_index])
 
                     p, c = spo.curve_fit(BixMaxFit, v_mid_arr, count_array,
                                          p0=(700000, 750000, 37000, max(count_array), max(count_array)/50),
@@ -661,10 +664,10 @@ class SPAN:
 
                     if plot_temperatures:
                         fitted_data = BixMaxFit(np.linspace(0, max(v_mid_arr), 1000), *p)
-                        plt.plot(np.linspace(0, max(v_mid_arr), 1000)[fitted_data != 0]/1e3,
-                                 fitted_data[fitted_data != 0],
-                                 label="Fitted: Theta %i, Phi %i, with width %.3g %s"
-                                 % (theta, phi, p[2]/1e3, 'km/s'), alpha=0.5, color=colours[colour_index])
+                        par_fig.plot(np.linspace(0, max(v_mid_arr), 1000)[fitted_data != 0]/1e3,
+                                     fitted_data[fitted_data != 0],
+                                     label="Fitted: Theta %i, Phi %i, with width %.3g %s"
+                                     % (theta, phi, p[2]/1e3, 'km/s'), alpha=0.5, color=colours[colour_index])
 
                     cell_dict = {}
                     cell_dict.update({'theta': theta})
@@ -678,12 +681,14 @@ class SPAN:
                         cell_dict.update({'brightest_pixel': False})
 
                     df_list.append(cell_dict)
+                    print(df_list)
 
             if plot_temperatures:
-                plt.xlabel('Velocty, km/s')
-                plt.ylabel('Count')
+                par_fig.xlabel('Velocty, km/s')
+                par_fig.ylabel('Count')
+                par_fig.title('Count vs Velocity plot for finding paralllel temperatures')
 
-                plt.legend(loc='upper right')
+                par_fig.legend(loc='upper right')
 
             cell_df = pd.DataFrame(df_list)
             print(cell_df)
@@ -774,11 +779,11 @@ class SPAN:
                                                  phi_high=high_phi_arr[phi])
                     count_array[n] = value
 
-                if not all(count_array < noise_filter_fraction * brightest_count):
+                if any(count_array > noise_filter_fraction * brightest_count):
                     if plot_temperatures:
-                        plt.plot(v_mid_arr_km[count_array != 0], count_array[count_array != 0],
-                                 marker='o', label='Measured: Theta %i, Phi %i' % (theta, phi),
-                                 alpha=0.5, color=colours[colour_index])
+                        perp_fig.plot(v_mid_arr_km[count_array != 0], count_array[count_array != 0],
+                                      marker='o', label='Measured: Theta %i, Phi %i' % (theta, phi),
+                                      alpha=0.5, color=colours[colour_index])
 
                     p, c = spo.curve_fit(BixMaxFit, v_mid_arr, count_array,
                                          p0=(700000, 750000, 37000, max(count_array), max(count_array) / 50),
@@ -787,10 +792,10 @@ class SPAN:
 
                     if plot_temperatures:
                         fitted_data = BixMaxFit(np.linspace(0, max(v_mid_arr), 1000), *p)
-                        plt.plot(np.linspace(0, max(v_mid_arr), 1000)[fitted_data != 0] / 1e3,
-                                 fitted_data[fitted_data != 0],
-                                 label="Fitted: Theta %i, Phi %i, with width %.3g %s"
-                                       % (theta, phi, p[2] / 1e3, 'km/s'), alpha=0.5, color=colours[colour_index])
+                        perp_fig.plot(np.linspace(0, max(v_mid_arr), 1000)[fitted_data != 0] / 1e3,
+                                      fitted_data[fitted_data != 0],
+                                      label="Fitted: Theta %i, Phi %i, with width %.3g %s"
+                                            % (theta, phi, p[2] / 1e3, 'km/s'), alpha=0.5, color=colours[colour_index])
 
                     cell_dict = {}
                     cell_dict.update({'theta': theta})
@@ -806,10 +811,11 @@ class SPAN:
                     df_list.append(cell_dict)
 
             if plot_temperatures:
-                plt.xlabel('Velocty, km/s')
-                plt.ylabel('Count')
+                perp_fig.xlabel('Velocty, km/s')
+                perp_fig.ylabel('Count')
+                perp_fig.title('Count vs Velocity plot for finding perpendicular temperatures')
 
-                plt.legend(loc='upper right')
+                perp_fig.legend(loc='upper right')
 
             cell_df = pd.DataFrame(df_list)
             print(cell_df)
@@ -844,6 +850,8 @@ class SPAN:
             print('perpendicular = ', perpendicular_temp_ms , 'm/s, ',
                   peprendicular_temp_k, 'K')
 
+        plt.show()
+
 
 if __name__ == '__main__':
     z_l = 3.09e4
@@ -852,9 +860,10 @@ if __name__ == '__main__':
     mode = 'default'
     device = SPAN(v_A=vA, T_par=170e3, T_perp=240e3, n=92e6, core_fraction=0.8,
                   bulk_velocity_arr=np.array([-700000, -700000, 0]))
-    device.count_measure(v_low=z_l, v_high=z_h, mode=mode, ignore_SPAN_pos=False)
-    #device.load_data('/home/henry/MSci-SolarWind/SPANDataBulk-700B010n010m00-1Tx1.7E+05Ty2.4E+05Tz2.4E+05CF8.csv')
-    device.temperature_search(resolution_number=100, B_extent=500000, mode=mode, direction='both',
+    #device.count_measure(v_low=z_l, v_high=z_h, mode=mode, ignore_SPAN_pos=False)
+    device.load_data('/home/henry/MSci-SolarWind/SPANDataBulk-700B010n00-1m-100Tpar1.7E+05Tperp2.4E+05CF8.csv')
+    device.temperature_search(resolution_number=100, B_extent=1000000, mode=mode, direction='both',
+                              noise_filter_fraction=0.001,
                               plot_brightest=False, plot_temperatures=True)
     device.plot_data(mode=mode, savefig=True,
                      saveloc='/home/henry/MSci-SolarWind/SPAN_Plots/Test.png')
