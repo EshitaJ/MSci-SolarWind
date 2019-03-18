@@ -33,12 +33,23 @@ variance_guess = 40
 
 total = spcf.Total_Fit(gv.E_plot, band_centres, total_data, fit_array, True,
                        mu1_guess, mu2_guess, variance_guess, 0.09, 0.01)
+n1 = 0.03
+n2 = 0.01
+
+q1 = spcf.Total_Fit(gv.E_plot, band_centres, data1, fit_array, False,
+                    mu1_guess, mu2_guess, variance_guess, n1, n2)
+q2 = spcf.Total_Fit(gv.E_plot, band_centres, data2, fit_array, False,
+                    mu1_guess, mu2_guess, variance_guess, n1, n2)
+q3 = spcf.Total_Fit(gv.E_plot, band_centres, data3, fit_array, False,
+                    mu1_guess, mu2_guess, variance_guess, 0.1*n1, 0.1*n2)
+q4 = spcf.Total_Fit(gv.E_plot, band_centres, data4, fit_array, False,
+                    mu1_guess, mu2_guess, variance_guess, 0.1*n1, 0.1*n2)
 
 # True values from simulated observations
-# mu1, sg1 = q1[0], q1[3]
-# mu2, sg2 = q2[0], q2[3]
-# mu3, sg3 = q3[0], q3[3]
-# mu4, sg4 = q4[0], q4[3]
+mu1, sg1 = q1[0], q1[3]
+mu2, sg2 = q2[0], q2[3]
+mu3, sg3 = q3[0], q3[3]
+mu4, sg4 = q4[0], q4[3]
 mu, sg = total[0], total[3]
 radial_temp = total[6]
 print("radial_temp: ", radial_temp)
@@ -50,18 +61,22 @@ def cost_func(t_perp_guess, t_par_guess):
     comment = "Minimisation_Test_"
     # get estimated values
     load = False
-    estimated_data = SPC.main(t_perp_guess, 1.73e5, comment, load)
+    estimated_data = SPC.main(t_perp_guess, t_par_guess, comment, load)
+    quad1, quad2, quad3, quad4 = estimated_data[0], estimated_data[1], estimated_data[2], estimated_data[3]
     tf = estimated_data[4]
     mu_estimate, sg_estimate = tf[0], tf[3]
-    # mu2_estimate, sg2_estimate = quad2[0], np.abs(quad2[3])
-    # mu3_estimate, sg3_estimate = quad3[0], np.abs(quad3[3])
-    # mu4_estimate, sg4_estimate = quad4[0], np.abs(quad4[3])
+    mu1_estimate, sg1_estimate = quad1[0], np.abs(quad1[3])
+    mu2_estimate, sg2_estimate = quad2[0], np.abs(quad2[3])
+    mu3_estimate, sg3_estimate = quad3[0], np.abs(quad3[3])
+    mu4_estimate, sg4_estimate = quad4[0], np.abs(quad4[3])
 
     # calculate cost
-    mu_cost = (mu - mu_estimate)**2
-    # + (mu2 - mu2_estimate)**2 + (mu3 - mu3_estimate)**2 + (mu4 - mu4_estimate)**2
-    sg_cost = (sg - sg_estimate)**2
-     # + (sg2 - sg2_estimate)**2 + (sg3 - sg3_estimate)**2 + (sg4 - sg4_estimate)**2
+    # mu_cost = (mu - mu_estimate)**2
+    mu_cost = (mu1 - mu1_estimate)**2 \
+    + (mu2 - mu2_estimate)**2 + (mu3 - mu3_estimate)**2 + (mu4 - mu4_estimate)**2
+    # sg_cost = (sg - sg_estimate)**2
+    sg_cost = (sg1 - sg1_estimate)**2 \
+     + (sg2 - sg2_estimate)**2 + (sg3 - sg3_estimate)**2 + (sg4 - sg4_estimate)**2
 
     cost = 0.01*mu_cost + sg_cost
     return cost
@@ -115,7 +130,7 @@ def grad_descent(coeff, t_estimate):
             t_perp_est, t_par_est = t
             print("perp, par: ", t_perp_est, t_par_est)
             delta_t_perp = t_perp_est + delta*t_perp_est
-            delta_t_par = t_par_est + 0.001*delta*t_par_est
+            delta_t_par = t_par_est + delta*t_par_est
             print("Delta: ", delta_t_perp, delta_t_par)
 
             results = tuple(pool.imap(cost_func_wrapper, [
@@ -139,10 +154,10 @@ def grad_descent(coeff, t_estimate):
     error = np.inf
     iteration = 0
     iter_list = [iteration]
-    epsilon = 0.01  # 5% error
+    epsilon = 0.01
 
     while error > epsilon:
-        cost_grad_vec = grad_cost(0.1, T_old)
+        cost_grad_vec = grad_cost(0.1, T_new)
         print("BEFORE T_old, T_new:", T_old, T_new)
         T_new, T_old = (T_new - coeff * cost_grad_vec, T_new)
         print("AFTER  T_old, T_new:", T_old, T_new)
