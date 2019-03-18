@@ -134,5 +134,5 @@ def Total_Fit(E_plot, x_axis, data, fit_array, is_total,
     # plt.legend()
     # plt.show()
 
-    return p[1], parameters1[1], parameters2[1], sigma, sigma1, sigma2, \
+    return np.abs(p[1]), parameters1[1], parameters2[1], np.abs(sigma), sigma1, sigma2, \
         radial_temp

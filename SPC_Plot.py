@@ -303,21 +303,21 @@ def Plot(E_plot, plot_total, is_core, plates,
         plt.plot(band_centres, quad3, 'gx', label='Quadrant 3')
         plt.plot(band_centres, quad4, 'b-', label='Quadrant 4')
         plt.ylabel("Current (nA)")
-        # q1, q2, q3, q4 = 0, 0, 0, 0
-        n = 0.1
-        
-        q1 = Total_Fit(E_plot, band_centres, quad1, fit_array, False,
-                       mu1_guess, mu2_guess, variance_guess,
-                       np.max(quad1), n*np.max(quad1))
-        q2 = Total_Fit(E_plot, band_centres, quad2, fit_array, False,
-                       mu1_guess, mu2_guess, variance_guess,
-                       np.max(quad2), n*np.max(quad2))
-        q3 = Total_Fit(E_plot, band_centres, quad3, fit_array, False,
-                       mu1_guess, mu2_guess, variance_guess,
-                       n*np.max(quad3), n*np.max(quad3))
-        q4 = Total_Fit(E_plot, band_centres, quad4, fit_array, False,
-                       mu1_guess, mu2_guess, variance_guess,
-                       n*np.max(quad3), n*np.max(quad3))
+        q1, q2, q3, q4 = 0, 0, 0, 0
+        # n = 0.1
+        #
+        # q1 = Total_Fit(E_plot, band_centres, quad1, fit_array, False,
+        #                mu1_guess, mu2_guess, variance_guess,
+        #                np.max(quad1), np.max(quad1))
+        # q2 = Total_Fit(E_plot, band_centres, quad2, fit_array, False,
+        #                mu1_guess, mu2_guess, variance_guess,
+        #                np.max(quad2), np.max(quad2))
+        # q3 = Total_Fit(E_plot, band_centres, quad3, fit_array, False,
+        #                mu1_guess, mu2_guess, variance_guess,
+        #                np.max(quad3), np.max(quad3))
+        # q4 = Total_Fit(E_plot, band_centres, quad4, fit_array, False,
+        #                mu1_guess, mu2_guess, variance_guess,
+        #                0.1*np.max(quad4), 0.01*np.max(quad4))
 
         plt.legend()
 
