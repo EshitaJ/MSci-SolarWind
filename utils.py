@@ -2,7 +2,7 @@ import scipy.constants as cst
 import numpy as np
 
 
-def BiMax(x, y, z, v_A, T_x, T_y, T_z, n, core_fraction, is_core, bulk_velocity=700000):
+def BiMax(x, y, z, v_A, T_par, T_perp, n, core_fraction, is_core, bulk_velocity=700000):
     x, y, z = -x, -y, -z
     if is_core:
         n_p = core_fraction * n
@@ -11,8 +11,8 @@ def BiMax(x, y, z, v_A, T_x, T_y, T_z, n, core_fraction, is_core, bulk_velocity=
         n_p = (1 - core_fraction) * n
         y = y + v_A + bulk_velocity
 
-    norm = n_p * (cst.m_p/(2 * np.pi * cst.k))**1.5 / np.sqrt(T_x * T_y * T_z)
-    exponent = -((z**2/T_z) + (y**2/T_y) + (x**2/T_x)) \
+    norm = n_p * (cst.m_p/(2 * np.pi * cst.k))**1.5 / np.sqrt(T_par * np.square(T_perp))
+    exponent = -((z**2/T_perp) + (y**2/T_perp) + (x**2/T_par)) \
         * (cst.m_p/(2 * cst.k))
     vdf = norm * np.exp(exponent)
     return vdf
@@ -75,12 +75,12 @@ def rotationmatrix(B, axis, fixed_rot_x=False):
     return R
 
 
-#n_array = np.array([0, 0.35, 0.94])
-#m_array = np.array([-0.39, -0.86, 0.32])
-n_array = np.array([0, 1, 0])
-m_array = np.array([0, 0, -1])
+n_array = np.array([0, 0.35, 0.94])
+m_array = np.array([-0.39, -0.86, 0.32])
+#n_array = np.array([0, 1, 0])
+#m_array = np.array([0, 0, -1])
 
-field_array = np.array([0, 1, 0])
+field_array = np.array([1, 1, 0])
 field_array = field_array / np.linalg.norm(field_array)
 
 """n_rotation_matrix = rotationmatrix(np.array([1, 0, 0]), n_array)
@@ -95,10 +95,9 @@ field_rotation_matrix = rotationmatrix(np.array([1, 0, 0]), -field_array)
 inv_field_matrix = np.linalg.inv(field_rotation_matrix)
 
 nm_field_array = np.matmul(nm_rotation_matrix, field_array)
-B_nm_x, B_nm_y, B_nm_z = nm_field_array
 
 
-def RotatedBiMaW(x, y, z, v_A, T_x, T_y, T_z, n, core_fraction, is_core, bulk_velocity, sc_velocity=np.array([0, 0, 0])):
+def RotatedBiMaW(x, y, z, v_A, T_par, T_perp, n, core_fraction, is_core, bulk_velocity, sc_velocity=np.array([0, 0, 0])):
     #print(np.array([x, y, z]))
     vel = np.array([x, y, z])  # in SPC frame, -ve due to look direction; turned on here
     v_beam = np.array([-v_A, 0, 0])
@@ -130,8 +129,8 @@ def RotatedBiMaW(x, y, z, v_A, T_x, T_y, T_z, n, core_fraction, is_core, bulk_ve
     x, y, z = v_new
     #print('Change Places!')
 
-    norm = n_p * (cst.m_p/(2 * np.pi * cst.k ))**1.5 / np.sqrt(T_x * T_y * T_z)
-    exponent = -((z**2/T_z) + (y**2/T_y) + (x**2/T_x)) * (cst.m_p/(2 * cst.k))
+    norm = n_p * (cst.m_p/(2 * np.pi * cst.k ))**1.5 / np.sqrt(T_par * np.square(T_perp))
+    exponent = -((z**2/T_perp) + (y**2/T_perp) + (x**2/T_par)) * (cst.m_p/(2 * cst.k))
     DF = norm * np.exp(exponent)
     return DF
 

@@ -13,15 +13,14 @@ class SPAN:
 
     def __init__(self,
                  v_A,
-                 T_x, T_y, T_z,
+                 T_par, T_perp,
                  n, core_fraction,
                  bulk_velocity_int=700000,
                  bulk_velocity_arr=np.array([-700000, 0, 0])
                  ):
         self.v_A = v_A
-        self.T_x = T_x
-        self.T_y = T_y
-        self.T_z = T_z
+        self.T_par = T_par
+        self.T_perp = T_perp
         self.n = n
         self.core_fraction = core_fraction
         self.bulk_velocity_int = bulk_velocity_int
@@ -34,13 +33,13 @@ class SPAN:
     def integral(self, vz, vx, vy):
         vdf = BiMax(x=vx, y=vy, z=vz,
                     v_A=self.v_A,
-                    T_x=self.T_x, T_y=self.T_y, T_z=self.T_z,
+                    T_par=self.T_par, T_perp=self.T_perp,
                     n=self.n, core_fraction=self.core_fraction, is_core=True,
                     bulk_velocity=self.bulk_velocity_int) \
               + \
               BiMax(x=vx, y=vy, z=vz,
                     v_A=self.v_A,
-                    T_x=self.T_x, T_y=self.T_y, T_z=self.T_z,
+                    T_par=self.T_par, T_perp=self.T_perp,
                     n=self.n, core_fraction=self.core_fraction, is_core=False,
                     bulk_velocity=self.bulk_velocity_int)
         return vdf
@@ -48,13 +47,13 @@ class SPAN:
     def rotated_integral(self, vz, vx, vy):
         vdf = RotatedBiMaW(x=vx, y=vy, z=vz,
                            v_A=self.v_A,
-                           T_x=self.T_x, T_y=self.T_y, T_z=self.T_z,
+                           T_par=self.T_par, T_perp=self.T_perp,
                            n=self.n, core_fraction=self.core_fraction, is_core=True,
                            bulk_velocity=self.bulk_velocity_arr) \
               + \
               RotatedBiMaW(x=vx, y=vy, z=vz,
                            v_A=self.v_A,
-                           T_x=self.T_x, T_y=self.T_y, T_z=self.T_z,
+                           T_par=self.T_par, T_perp=self.T_perp,
                            n=self.n, core_fraction=self.core_fraction, is_core=False,
                            bulk_velocity=self.bulk_velocity_arr)
         return vdf
@@ -218,9 +217,9 @@ class SPAN:
             self.latest_coarse_count_matrix = count_matrix
 
         if save_data:
-            np.savetxt('SPANDataBulk-700B010n00-1m-100Tx%.1ETy%.1ETz%.1ECF%.0f.csv'
-                       % (self.T_x, self.T_y, self.T_z, self.core_fraction*10),
-                       count_matrix, delimiter=',')
+            np.savetxt('SPANDataBulk-700B010n00-1m-100Tpar%.1ETperp%.1ECF%.0f.csv'
+                       % (self.T_par, self.T_perp, self.core_fraction*10),
+                          count_matrix, delimiter=',')
 
         else:
             plt.imshow(count_matrix, interpolation='none'
@@ -228,9 +227,8 @@ class SPAN:
                                              vmax=count_matrix[count_matrix != 0.0].max())
                        )
 
-            plt.title('SPAN Results streaming along R \n T_R=%.0fkm/s, T_T=%.0fkm/s, T_N=%.0fkm/s \n'
-                      'n = [0, 0.35, 0.94], m = [-0.39, -0.86, 0.32]'
-                      % (self.T_x, self.T_y, self.T_z))
+            plt.title('SPAN Results\n'
+                      'n = [0, 0.35, 0.94], m = [-0.39, -0.86, 0.32]')
             plt.xlabel('Phi Cell Index')
             plt.ylabel('Theta Cell Index')
 
@@ -271,14 +269,13 @@ class SPAN:
                      format='$%.0E$')
 
         plt.legend(title="Bulk Speed = [%.0f, %.0f, %.0f]km/s\n"
-                         "Tx = %.0f, Ty = %.0f, Tz = %.0f km/s\n"
+                         "Tpar = %.0f, Tperp = %.0f\n"
                          "n=[0,1,0], m=[-1,0,0]\n"
                          "Field Direction=[-1,-1,0]"
                          % (self.bulk_velocity_arr[0] / 1e3, self.bulk_velocity_arr[1] / 1e3,
                             self.bulk_velocity_arr[2] / 1e3,
-                            np.sqrt(cst.k * self.T_x / cst.m_p) / 1e3,
-                            np.sqrt(cst.k * self.T_y / cst.m_p) / 1e3,
-                            np.sqrt(cst.k * self.T_z / cst.m_p) / 1e3),
+                            np.sqrt(cst.k * self.T_par / cst.m_p) / 1e3,
+                            np.sqrt(2*cst.k * self.T_perp / cst.m_p) / 1e3),
                    loc='center right', bbox_to_anchor=(-0.3, 0.5))
 
         if savefig:
@@ -354,15 +351,14 @@ class SPAN:
 
         plt.legend(title="%.2f < Theta < %.2f\n"
                          "Bulk Speed = [%.0f, %.0f, %.0f]km/s\n"
-                         "Tx = %.0f, Ty = %.0f, Tz = %.0f km/s\n"
+                         "Tpar = %.0f, Tperp = %.0f\n"
                          "n=[0,1,0], m=[-1,0,0]\n"
                          "Fitted Mean Phi = %.3f$\pi$+-%.3f$\pi$\n"
                          "Calculated Mean Phi = 0.803$\pi$"
                          % (theta_low_lim, theta_high_lim,
                             self.bulk_velocity_arr[0]/1e3, self.bulk_velocity_arr[1]/1e3, self.bulk_velocity_arr[2]/1e3,
-                            np.sqrt(cst.k * self.T_x / cst.m_p) / 1e3,
-                            np.sqrt(cst.k * self.T_y / cst.m_p) / 1e3,
-                            np.sqrt(cst.k * self.T_z / cst.m_p) / 1e3,
+                            np.sqrt(cst.k * self.T_par / cst.m_p) / 1e3,
+                            np.sqrt(cst.k * self.T_perp / cst.m_p) / 1e3,
                             popt[1], np.sqrt(pcov[1][1])
                             ),
                    loc='lower left', bbox_to_anchor=(0, 0))
@@ -438,15 +434,14 @@ class SPAN:
 
         plt.legend(title="%.2f < Phi < %.2f\n"
                          "Bulk Speed = [%.0f, %.0f, %.0f]km/s\n"
-                         "Tx = %.0f, Ty = %.0f, Tz = %.0f km/s\n"
+                         "Tpar = %.0f, Tperp = %.0f\n"
                          "n=[0,1,0], m=[-1,0,0]\n"
                          "Fitted Mean Theta = %.3f$\pi$+-%.3f$\pi$\n"
                          "Calculated Mean Theta = -0.250$\pi$"
                          % (phi_low_lim, phi_high_lim,
                             self.bulk_velocity_arr[0]/1e3, self.bulk_velocity_arr[1]/1e3, self.bulk_velocity_arr[2]/1e3,
-                            np.sqrt(cst.k * self.T_x / cst.m_p) / 1e3,
-                            np.sqrt(cst.k * self.T_y / cst.m_p) / 1e3,
-                            np.sqrt(cst.k * self.T_z / cst.m_p) / 1e3,
+                            np.sqrt(cst.k * self.T_par / cst.m_p) / 1e3,
+                            np.sqrt(cst.k * self.T_perp / cst.m_p) / 1e3,
                             popt[1], np.sqrt(pcov[1][1])
                             ),
                    loc='lower left', bbox_to_anchor=(0, 0))
@@ -515,38 +510,42 @@ class SPAN:
             plt.xlabel('Velocity/km')
             plt.ylabel('Count')
 
-            plt.legend(title='T_x=%.0f km/s, T_y=%.0f km/s, T_z=%.0f km/s\nResolution = %d'
-                      % (np.sqrt(cst.k * self.T_x / cst.m_p)/1e3,
-                         np.sqrt(cst.k * self.T_y / cst.m_p)/1e3,
-                         np.sqrt(cst.k * self.T_z / cst.m_p)/1e3,
+            plt.legend(title='T_par=%.0f km/s, T_perp=%.0f km/s\nResolution = %d'
+                      % (np.sqrt(cst.k * self.T_par / cst.m_p)/1e3,
+                         np.sqrt(cst.k * self.T_perp / cst.m_p)/1e3,
                          resolution_number))
 
             plt.title('Count Measured by Pixel Theta Index %d & Phi Index %d'
                       % (theta_index, phi_index))
 
-            plt.savefig('PixelCountyTx%.1ETy%.1ETz%.1ETheta%dPhi%dResolution%d.png'
-                        % (self.T_x, self.T_y, self.T_z, theta_index, phi_index, resolution_number))
+            plt.savefig('PixelCountTpar%.1ETperp%.1ETheta%dPhi%dResolution%d.png'
+                        % (self.T_par, self.T_perp, theta_index, phi_index, resolution_number))
 
             plt.show()
 
         if find_FWHM:
             return {'mu1': p[0], 'mu2': p[1], 'std': p[2], 'coeff1': p[3], 'coeff2': p[4]}, max(count_array)
 
-    def temperature_search(self, resolution_number=100, B_extent=500000, noise_filter_fraction=0.01,
-                           mode='default', plotting=True):
+    def temperature_search(self, resolution_number=100, B_extent=500000, noise_filter_fraction=0.01, direction='both',
+                           mode='default', plot_brightest=False, plot_temperatures=True):
         if mode is 'default':
             if self.latest_count_matrix is not None:
                 count_matrix = self.latest_count_matrix
             else:
                 print('must generate data first!')
+                count_matrix = None
         elif mode is 'coarse':
             if self.latest_coarse_count_matrix is not None:
                 count_matrix = self.latest_coarse_count_matrix
             else:
                 print('must generate data first!')
+                count_matrix = None
 
         else:
             print('This is not a valid mode')
+            count_matrix = None
+
+        B_nm_x, B_nm_y, B_nm_z = nm_field_array
 
         phi_arr_deg = np.concatenate((np.linspace(0, 135, 7), np.linspace(146.25, 247.5, 10)))
         phi_arr = phi_arr_deg * np.pi / 180
@@ -571,7 +570,7 @@ class SPAN:
 
         p_max, brightest_count = device.pixel_energy_anlysis(theta_index=theta_max_index, phi_index=phi_max_index,
                                                              resolution_number=resolution_number,
-                                                             find_FWHM=True, plot=plotting)
+                                                             find_FWHM=True, plot=plot_brightest)
 
         print(brightest_count)
 
@@ -582,31 +581,9 @@ class SPAN:
         bulk_resolution = 2*B_extent + 1
 
         scale_array = np.linspace(-B_extent, B_extent, bulk_resolution)
-        parallel_x = scale_array*B_nm_x
-        parallel_y = scale_array*B_nm_y
-        parallel_z = scale_array*B_nm_z
-        total_flow = np.transpose(np.array([parallel_x + bulk_x, parallel_y + bulk_y, parallel_z + bulk_z]))
-        total_flow_sph = np.array([cart_to_sph_arr(total_flow[i]) for i in range(bulk_resolution)])
-        total_flow_sph[:, 2][total_flow_sph[:, 2] < 0] += 2*np.pi
 
-        flow_theta_phi_indices = np.empty([bulk_resolution, 2])
-
-        for point_index in range(bulk_resolution):
-            theta_index = next((i for i in range(32) if
-                               (total_flow_sph[point_index][1] >= low_theta_arr[i])
-                               & (total_flow_sph[point_index][1] <= high_theta_arr[i])), None)
-            phi_index = next((i for i in range(16) if
-                             (total_flow_sph[point_index][2] >= low_phi_arr[i])
-                             & (total_flow_sph[point_index][2] <= high_phi_arr[i])), None)
-
-            flow_theta_phi_indices[point_index] = np.array([theta_index, phi_index])
-
-        unique_cells_nan = np.unique(flow_theta_phi_indices, axis=0)
-        unique_cells = unique_cells_nan[~np.isnan(unique_cells_nan).any(axis=1)]
-        print(unique_cells)
-
-        E_range_eV = np.linspace(5, 30e3, resolution_number+1)
-        E_range_J = E_range_eV*cst.e
+        E_range_eV = np.linspace(5, 30e3, resolution_number + 1)
+        E_range_J = E_range_eV * cst.e
         v_range = np.sqrt(2 * E_range_J / cst.m_p)
         low_v_arr = v_range[:-1]
         high_v_arr = v_range[1:]
@@ -620,98 +597,252 @@ class SPAN:
         colours = ['b', 'y', 'tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
                    'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
 
-        cell_range = range(len(unique_cells[:, 0]))
+        if direction is 'both' or 'parallel':
+            parallel_x = scale_array*B_nm_x
+            parallel_y = scale_array*B_nm_y
+            parallel_z = scale_array*B_nm_z
+            total_flow = np.transpose(np.array([parallel_x + bulk_x, parallel_y + bulk_y, parallel_z + bulk_z]))
+            total_flow_sph = np.array([cart_to_sph_arr(total_flow[i]) for i in range(bulk_resolution)])
+            total_flow_sph[:, 2][total_flow_sph[:, 2] < 0] += 2*np.pi
 
-        df_list = []
+            flow_theta_phi_indices = np.empty([bulk_resolution, 2])
 
-        for cell_index in cell_range:
+            for point_index in range(bulk_resolution):
+                theta_index = next((i for i in range(32) if
+                                   (total_flow_sph[point_index][1] >= low_theta_arr[i])
+                                   & (total_flow_sph[point_index][1] <= high_theta_arr[i])), None)
+                phi_index = next((i for i in range(16) if
+                                 (total_flow_sph[point_index][2] >= low_phi_arr[i])
+                                 & (total_flow_sph[point_index][2] <= high_phi_arr[i])), None)
 
-            cell = unique_cells[cell_index]
-            print(cell)
-            theta = int(cell[0])
-            phi = int(cell[1])
+                flow_theta_phi_indices[point_index] = np.array([theta_index, phi_index])
 
-            colour_index = cell_index
-            while colour_index > 11:
-                colour_index -= 12
+            unique_cells_nan = np.unique(flow_theta_phi_indices, axis=0)
+            unique_cells = unique_cells_nan[~np.isnan(unique_cells_nan).any(axis=1)]
+            print(unique_cells)
 
-            count_array = np.empty([resolution_number])
+            cell_range = range(len(unique_cells[:, 0]))
 
-            for n in range(resolution_number):
-                print(n)
-                value = self.count_integrate(v_low=low_v_arr[n],
-                                             v_high=high_v_arr[n],
-                                             theta_low=low_theta_arr[theta],
-                                             theta_high=high_theta_arr[theta],
-                                             phi_low=low_phi_arr[phi],
-                                             phi_high=high_phi_arr[phi])
-                count_array[n] = value
+            df_list = []
 
-            if not all(count_array < noise_filter_fraction*brightest_count):
-                plt.plot(v_mid_arr_km[count_array != 0], count_array[count_array != 0],
-                         marker='o', label='Measured: Theta %i, Phi %i' % (theta, phi),
-                         alpha=0.5, color=colours[colour_index])
+            for cell_index in cell_range:
 
-                p, c = spo.curve_fit(BixMaxFit, v_mid_arr, count_array,
-                                     p0=(700000, 750000, 37000, max(count_array), max(count_array)/50),
-                                     maxfev=10000)
-                print(p)
+                cell = unique_cells[cell_index]
+                print(cell)
+                theta = int(cell[0])
+                phi = int(cell[1])
 
-                fitted_data = BixMaxFit(np.linspace(0, max(v_mid_arr), 1000), *p)
-                plt.plot(np.linspace(0, max(v_mid_arr), 1000)[fitted_data != 0]/1e3,
-                         fitted_data[fitted_data != 0],
-                         label="Fitted: Theta %i, Phi %i, with width %.3g %s"
-                         % (theta, phi, p[2]/1e3, 'km/s'), alpha=0.5, color=colours[colour_index])
+                colour_index = cell_index
+                while colour_index > 11:
+                    colour_index -= 12
 
-                cell_dict = {}
-                cell_dict.update({'theta': theta})
-                cell_dict.update({'phi': phi})
-                cell_dict.update({'max_count': max(count_array)})
-                cell_dict.update({'width': p[2]/1e3})
-                cell_dict.update({'mu1': p[0]})
-                if max(count_array) == brightest_count:
-                    cell_dict.update({'brightest_pixel': True})
-                else:
-                    cell_dict.update({'brightest_pixel': False})
+                count_array = np.empty([resolution_number])
 
-                df_list.append(cell_dict)
+                for n in range(resolution_number):
+                    print(n)
+                    value = self.count_integrate(v_low=low_v_arr[n],
+                                                 v_high=high_v_arr[n],
+                                                 theta_low=low_theta_arr[theta],
+                                                 theta_high=high_theta_arr[theta],
+                                                 phi_low=low_phi_arr[phi],
+                                                 phi_high=high_phi_arr[phi])
+                    count_array[n] = value
 
-        plt.xlabel('Velocty, km/s')
-        plt.ylabel('Count')
+                if not all(count_array < noise_filter_fraction*brightest_count):
+                    if plot_temperatures:
+                        plt.plot(v_mid_arr_km[count_array != 0], count_array[count_array != 0],
+                                 marker='o', label='Measured: Theta %i, Phi %i' % (theta, phi),
+                                 alpha=0.5, color=colours[colour_index])
 
-        plt.legend(loc='upper right')
+                    p, c = spo.curve_fit(BixMaxFit, v_mid_arr, count_array,
+                                         p0=(700000, 750000, 37000, max(count_array), max(count_array)/50),
+                                         maxfev=10000)
+                    print(p)
 
-        cell_df = pd.DataFrame(df_list)
-        print(cell_df)
+                    if plot_temperatures:
+                        fitted_data = BixMaxFit(np.linspace(0, max(v_mid_arr), 1000), *p)
+                        plt.plot(np.linspace(0, max(v_mid_arr), 1000)[fitted_data != 0]/1e3,
+                                 fitted_data[fitted_data != 0],
+                                 label="Fitted: Theta %i, Phi %i, with width %.3g %s"
+                                 % (theta, phi, p[2]/1e3, 'km/s'), alpha=0.5, color=colours[colour_index])
 
-        other_pixels_df = cell_df[~cell_df['brightest_pixel']].reset_index(drop=True)
+                    cell_dict = {}
+                    cell_dict.update({'theta': theta})
+                    cell_dict.update({'phi': phi})
+                    cell_dict.update({'max_count': max(count_array)})
+                    cell_dict.update({'width': p[2]/1e3})
+                    cell_dict.update({'mu1': p[0]})
+                    if max(count_array) == brightest_count:
+                        cell_dict.update({'brightest_pixel': True})
+                    else:
+                        cell_dict.update({'brightest_pixel': False})
 
-        print(other_pixels_df)
+                    df_list.append(cell_dict)
 
-        closest_index = None
-        closest_max_count = 1e10
+            if plot_temperatures:
+                plt.xlabel('Velocty, km/s')
+                plt.ylabel('Count')
 
-        for i in range(len(other_pixels_df.index)):
-            if abs(other_pixels_df.iloc[i]['max_count'] - brightest_count/2) <\
-                    abs(closest_max_count - brightest_count/2):
-                closest_index = i
-                closest_max_count = other_pixels_df.iloc[i]['max_count']
-                print(closest_max_count)
+                plt.legend(loc='upper right')
 
-        print(closest_index, closest_max_count)
+            cell_df = pd.DataFrame(df_list)
+            print(cell_df)
 
-        closest_radius = other_pixels_df.iloc[closest_index]['mu1']
-        closest_mid_theta = mid_theta_arr[int(other_pixels_df.iloc[closest_index]['theta'])]
-        closest_mid_phi = mid_phi_arr[int(other_pixels_df.iloc[closest_index]['phi'])]
-        print(closest_mid_theta, closest_mid_phi)
+            other_pixels_df = cell_df[~cell_df['brightest_pixel']].reset_index(drop=True)
 
-        closest_x, closest_y, closest_z = sph_to_cart(closest_radius, closest_mid_theta, closest_mid_phi)
-        print(closest_x, closest_y, closest_z)
-        print('parallel_temp = ', np.sqrt(np.square(bulk_x - closest_x) +
-                                          np.square(bulk_y - closest_y) +
-                                          np.square(bulk_z - closest_z)))
+            print(other_pixels_df)
 
-        plt.show()
+            closest_index = None
+            closest_max_count = 1e10
+
+            for i in range(len(other_pixels_df.index)):
+                if abs(other_pixels_df.iloc[i]['max_count'] - brightest_count/2) <\
+                        abs(closest_max_count - brightest_count/2):
+                    closest_index = i
+                    closest_max_count = other_pixels_df.iloc[i]['max_count']
+                    print(closest_max_count)
+
+            print(closest_index, closest_max_count)
+
+            closest_radius = other_pixels_df.iloc[closest_index]['mu1']
+            closest_mid_theta = mid_theta_arr[int(other_pixels_df.iloc[closest_index]['theta'])]
+            closest_mid_phi = mid_phi_arr[int(other_pixels_df.iloc[closest_index]['phi'])]
+            print(closest_mid_theta, closest_mid_phi)
+
+            closest_x, closest_y, closest_z = sph_to_cart(closest_radius, closest_mid_theta, closest_mid_phi)
+            print(closest_x, closest_y, closest_z)
+            parallel_temp_ms = 2*np.sqrt(np.square(bulk_x - closest_x) +
+                                         np.square(bulk_y - closest_y) +
+                                         np.square(bulk_z - closest_z))
+            parallel_temp_k = cst.m_p * np.square(parallel_temp_ms) / cst.k
+            print('parallel_temp = ', parallel_temp_ms, 'm/s, ',
+                  parallel_temp_k, 'K')
+
+        if direction is 'both' or 'perpendicular':
+            B_nm_x, B_nm_y, B_nm_z = np.cross(np.array([B_nm_x, B_nm_y, B_nm_z]),
+                                              np.array([bulk_x, bulk_y, bulk_z]) /
+                                              np.linalg.norm(np.array([bulk_x, bulk_y, bulk_z])))
+            print(B_nm_x, B_nm_y, B_nm_z)
+
+            parallel_x = scale_array * B_nm_x
+            parallel_y = scale_array * B_nm_y
+            parallel_z = scale_array * B_nm_z
+            total_flow = np.transpose(np.array([parallel_x + bulk_x, parallel_y + bulk_y, parallel_z + bulk_z]))
+            total_flow_sph = np.array([cart_to_sph_arr(total_flow[i]) for i in range(bulk_resolution)])
+            total_flow_sph[:, 2][total_flow_sph[:, 2] < 0] += 2 * np.pi
+
+            flow_theta_phi_indices = np.empty([bulk_resolution, 2])
+
+            for point_index in range(bulk_resolution):
+                theta_index = next((i for i in range(32) if
+                                    (total_flow_sph[point_index][1] >= low_theta_arr[i])
+                                    & (total_flow_sph[point_index][1] <= high_theta_arr[i])), None)
+                phi_index = next((i for i in range(16) if
+                                  (total_flow_sph[point_index][2] >= low_phi_arr[i])
+                                  & (total_flow_sph[point_index][2] <= high_phi_arr[i])), None)
+
+                flow_theta_phi_indices[point_index] = np.array([theta_index, phi_index])
+
+            unique_cells_nan = np.unique(flow_theta_phi_indices, axis=0)
+            unique_cells = unique_cells_nan[~np.isnan(unique_cells_nan).any(axis=1)]
+            print(unique_cells)
+
+            cell_range = range(len(unique_cells[:, 0]))
+
+            df_list = []
+
+            for cell_index in cell_range:
+
+                cell = unique_cells[cell_index]
+                print(cell)
+                theta = int(cell[0])
+                phi = int(cell[1])
+
+                colour_index = cell_index
+                while colour_index > 11:
+                    colour_index -= 12
+
+                count_array = np.empty([resolution_number])
+
+                for n in range(resolution_number):
+                    print(n)
+                    value = self.count_integrate(v_low=low_v_arr[n],
+                                                 v_high=high_v_arr[n],
+                                                 theta_low=low_theta_arr[theta],
+                                                 theta_high=high_theta_arr[theta],
+                                                 phi_low=low_phi_arr[phi],
+                                                 phi_high=high_phi_arr[phi])
+                    count_array[n] = value
+
+                if not all(count_array < noise_filter_fraction * brightest_count):
+                    if plot_temperatures:
+                        plt.plot(v_mid_arr_km[count_array != 0], count_array[count_array != 0],
+                                 marker='o', label='Measured: Theta %i, Phi %i' % (theta, phi),
+                                 alpha=0.5, color=colours[colour_index])
+
+                    p, c = spo.curve_fit(BixMaxFit, v_mid_arr, count_array,
+                                         p0=(700000, 750000, 37000, max(count_array), max(count_array) / 50),
+                                         maxfev=10000)
+                    print(p)
+
+                    if plot_temperatures:
+                        fitted_data = BixMaxFit(np.linspace(0, max(v_mid_arr), 1000), *p)
+                        plt.plot(np.linspace(0, max(v_mid_arr), 1000)[fitted_data != 0] / 1e3,
+                                 fitted_data[fitted_data != 0],
+                                 label="Fitted: Theta %i, Phi %i, with width %.3g %s"
+                                       % (theta, phi, p[2] / 1e3, 'km/s'), alpha=0.5, color=colours[colour_index])
+
+                    cell_dict = {}
+                    cell_dict.update({'theta': theta})
+                    cell_dict.update({'phi': phi})
+                    cell_dict.update({'max_count': max(count_array)})
+                    cell_dict.update({'width': p[2] / 1e3})
+                    cell_dict.update({'mu1': p[0]})
+                    if max(count_array) == brightest_count:
+                        cell_dict.update({'brightest_pixel': True})
+                    else:
+                        cell_dict.update({'brightest_pixel': False})
+
+                    df_list.append(cell_dict)
+
+            if plot_temperatures:
+                plt.xlabel('Velocty, km/s')
+                plt.ylabel('Count')
+
+                plt.legend(loc='upper right')
+
+            cell_df = pd.DataFrame(df_list)
+            print(cell_df)
+
+            other_pixels_df = cell_df[~cell_df['brightest_pixel']].reset_index(drop=True)
+
+            print(other_pixels_df)
+
+            closest_index = None
+            closest_max_count = 1e10
+
+            for i in range(len(other_pixels_df.index)):
+                if abs(other_pixels_df.iloc[i]['max_count'] - brightest_count / 2) < \
+                        abs(closest_max_count - brightest_count / 2):
+                    closest_index = i
+                    closest_max_count = other_pixels_df.iloc[i]['max_count']
+                    print(closest_max_count)
+
+            print(closest_index, closest_max_count)
+
+            closest_radius = other_pixels_df.iloc[closest_index]['mu1']
+            closest_mid_theta = mid_theta_arr[int(other_pixels_df.iloc[closest_index]['theta'])]
+            closest_mid_phi = mid_phi_arr[int(other_pixels_df.iloc[closest_index]['phi'])]
+            print(closest_mid_theta, closest_mid_phi)
+
+            closest_x, closest_y, closest_z = sph_to_cart(closest_radius, closest_mid_theta, closest_mid_phi)
+            print(closest_x, closest_y, closest_z)
+            perpendicular_temp_ms = 2 * np.sqrt(np.square(bulk_x - closest_x) +
+                                                np.square(bulk_y - closest_y) +
+                                                np.square(bulk_z - closest_z))
+            peprendicular_temp_k = cst.m_p * np.square(perpendicular_temp_ms) / cst.k
+            print('perpendicular = ', perpendicular_temp_ms , 'm/s, ',
+                  peprendicular_temp_k, 'K')
 
 
 if __name__ == '__main__':
@@ -719,10 +850,11 @@ if __name__ == '__main__':
     z_h = 1.38e6
     vA = 88000
     mode = 'default'
-    device = SPAN(v_A=vA, T_x=170e3, T_y=240e3, T_z=240e3, n=92e6, core_fraction=0.8,
-                  bulk_velocity_arr=np.array([-700000, 0, 0]))
-    #device.count_measure(v_low=z_l, v_high=z_h, mode=mode, ignore_SPAN_pos=False)
-    device.load_data('/home/henry/MSci-SolarWind/SPANDataBulk-700B010n010m00-1Tx1.7E+05Ty2.4E+05Tz2.4E+05CF8.csv')
-    device.temperature_search(resolution_number=100, B_extent=500000, mode=mode, plotting=False)
+    device = SPAN(v_A=vA, T_par=170e3, T_perp=240e3, n=92e6, core_fraction=0.8,
+                  bulk_velocity_arr=np.array([-700000, -700000, 0]))
+    device.count_measure(v_low=z_l, v_high=z_h, mode=mode, ignore_SPAN_pos=False)
+    #device.load_data('/home/henry/MSci-SolarWind/SPANDataBulk-700B010n010m00-1Tx1.7E+05Ty2.4E+05Tz2.4E+05CF8.csv')
+    device.temperature_search(resolution_number=100, B_extent=500000, mode=mode, direction='both',
+                              plot_brightest=False, plot_temperatures=True)
     device.plot_data(mode=mode, savefig=True,
                      saveloc='/home/henry/MSci-SolarWind/SPAN_Plots/Test.png')
