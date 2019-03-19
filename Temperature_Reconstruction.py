@@ -7,8 +7,8 @@ import SPC_Fits as spcf
 import Global_Variables as gv
 import itertools
 import multiprocessing as mp
-# import seaborn as sns
-# sns.set()
+import seaborn as sns
+sns.set()
 
 filename = "./Data/%s%s%s_N_%g_Field_%s" \
     % ("Perturbed_" if gv.perturbed else "",
@@ -94,7 +94,7 @@ def cost_func_wrapper(args):
 
 
 def heatmap():
-    temps = np.linspace(1e5, 4e5, 2).tolist()
+    temps = np.linspace(1e5, 4e5, 10).tolist()
     temp_combos = list(itertools.product(temps, temps))
     # indices = list(range(len(temp_combos)))
     # perp_array = np.linspace(0.5e5, 4e5, 1e2)
@@ -127,32 +127,39 @@ def heatmap():
                "\n True $T_{\parallel}$ at 1.7e5 K"
                % (np.degrees(np.arctan(gv.B[0]/gv.B[2]))
                ,  np.degrees(np.arctan(gv.B[1]/gv.B[2]))))
-    fig.savefig("heatmap.png")
+               # loc='center left', bbox_to_anchor=(1, 0.5)))
+    fig.savefig("Corresponding_SPAN_heatmap.png")
 
 
 def cost_func_1D():
-    temperatures = np.linspace(1e5, 4e5, 4)
+    temperatures = np.linspace(1e5, 4e5, 16)
     M = []
     T_list = []
     with mp.Pool() as pool:
-        t_perp_list = [2.4e5] * len(temperatures)
-        for i, c in enumerate(pool.imap(cost_func_wrapper, zip(temperatures, t_perp_list))):
+        t_perp_list = temperatures + 100000
+        # t_par_list = temperatures - 100000
+        # for i, c in enumerate(pool.imap(cost_func_wrapper, zip(temperatures, t_par_list))):
+        for i, c in enumerate(pool.imap(cost_func_wrapper, zip(t_perp_list, temperatures))):
             print("\033[92mCompleted %d of %d\033[0m" % (i + 1, len(temperatures)))
             if c == 0:
                 print("\033[91mFailed to converge sensibly for %d\033[0m" % (i + 1))
             else:
                 M.append(c)
                 T_list.append(temperatures[i])
-
+    fig, ax = plt.subplots()
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     fig3 = plt.figure("T par cost function")
     fig3.gca().plot(T_list, M, marker='x')
-    fig3.gca().set_xlabel(r"$T_{\perp}$ (K)")
+    fig3.gca().set_xlabel(r"$T_{\parallel}$ (K)")
     fig3.gca().set_ylabel("Cost function")
-    fig3.legend(title="B field at (%.02f$^\\circ$, %.02f$^\\circ$)"
+    fig3.legend(title="B field at (%.01f$^\\circ$, %.01f$^\\circ$)"
                "\n from SPC normal"
+               "\n $T_{\perp}  = T_{\parallel} + 100000$"
                % (np.degrees(np.arctan(gv.B[0]/gv.B[2]))
-               ,  np.degrees(np.arctan(gv.B[1]/gv.B[2]))))
-    fig3.savefig("Perp_1D_cost_func.png")
+               ,  np.degrees(np.arctan(gv.B[1]/gv.B[2]))),
+               loc='center left', bbox_to_anchor=(1, 0.5))
+    fig3.savefig("New_Par_1D_cost_func.png", bbox_inches="tight")
 
 
 def grad_descent(coeff, t_estimate):
@@ -189,7 +196,7 @@ def grad_descent(coeff, t_estimate):
     epsilon = 2e-6
 
     while error > epsilon:
-        cost_grad_vec = grad_cost(0.01, T_new)
+        cost_grad_vec = grad_cost(0.1, T_new)
         print("BEFORE T_old, T_new:", T_old, T_new)
         T_new, T_old = (T_new - coeff * cost_grad_vec, T_new)
         print("AFTER  T_old, T_new:", T_old, T_new)
@@ -225,6 +232,6 @@ def grad_descent(coeff, t_estimate):
     return(T_new)
 
 
-# grad_descent(np.array([5e8, 5e7]), radial_temp)
-heatmap()
+grad_descent(np.array([1e9, 1e8]), radial_temp)
+# heatmap()
 # cost_func_1D()
