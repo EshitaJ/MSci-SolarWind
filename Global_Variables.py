@@ -15,10 +15,11 @@ total = False
 Core = True
 core_fraction = 0.8 if total else 1
 
-load = False
+load = True
 perturbed = False
 comment = "Realistic_SW_"
-Rot = "Non-radial"
+# Rot = "Non-radial"
+Rot = "SPAN -X,-Y"
 N = 60
 
 pi = np.pi

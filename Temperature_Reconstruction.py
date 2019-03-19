@@ -7,6 +7,8 @@ import SPC_Fits as spcf
 import Global_Variables as gv
 import itertools
 import multiprocessing as mp
+# import seaborn as sns
+# sns.set()
 
 filename = "./Data/%s%s%s_N_%g_Field_%s" \
     % ("Perturbed_" if gv.perturbed else "",
@@ -92,7 +94,7 @@ def cost_func_wrapper(args):
 
 
 def heatmap():
-    temps = np.linspace(1e5, 4e5, 10).tolist()
+    temps = np.linspace(1e5, 4e5, 2).tolist()
     temp_combos = list(itertools.product(temps, temps))
     # indices = list(range(len(temp_combos)))
     # perp_array = np.linspace(0.5e5, 4e5, 1e2)
@@ -119,16 +121,22 @@ def heatmap():
     fig.colorbar(mappable, label="Cost function")
     fig.gca().set_xlabel(r"$T_{\rm{par}}$")
     fig.gca().set_ylabel(r"$T_{\rm{perp}}$")
+    fig.gca().legend(title="B field at (%.02f$^\\circ$, %.02f$^\\circ$)"
+               "\n from SPC normal"
+               "\n True $T_{\perp}$ at 2.4e5 K"
+               "\n True $T_{\parallel}$ at 1.7e5 K"
+               % (np.degrees(np.arctan(gv.B[0]/gv.B[2]))
+               ,  np.degrees(np.arctan(gv.B[1]/gv.B[2]))))
     fig.savefig("heatmap.png")
 
 
 def cost_func_1D():
-    temperatures = np.linspace(1e5, 4e5, 16)
+    temperatures = np.linspace(1e5, 4e5, 4)
     M = []
     T_list = []
     with mp.Pool() as pool:
         t_perp_list = [2.4e5] * len(temperatures)
-        for i, c in enumerate(pool.imap(cost_func_wrapper, zip(t_perp_list, temperatures))):
+        for i, c in enumerate(pool.imap(cost_func_wrapper, zip(temperatures, t_perp_list))):
             print("\033[92mCompleted %d of %d\033[0m" % (i + 1, len(temperatures)))
             if c == 0:
                 print("\033[91mFailed to converge sensibly for %d\033[0m" % (i + 1))
@@ -138,9 +146,13 @@ def cost_func_1D():
 
     fig3 = plt.figure("T par cost function")
     fig3.gca().plot(T_list, M, marker='x')
-    fig3.gca().set_xlabel(r"$T_{\parallel}$ (K)")
+    fig3.gca().set_xlabel(r"$T_{\perp}$ (K)")
     fig3.gca().set_ylabel("Cost function")
-    fig3.savefig("1D_cost_func.png")
+    fig3.legend(title="B field at (%.02f$^\\circ$, %.02f$^\\circ$)"
+               "\n from SPC normal"
+               % (np.degrees(np.arctan(gv.B[0]/gv.B[2]))
+               ,  np.degrees(np.arctan(gv.B[1]/gv.B[2]))))
+    fig3.savefig("Perp_1D_cost_func.png")
 
 
 def grad_descent(coeff, t_estimate):
@@ -174,7 +186,7 @@ def grad_descent(coeff, t_estimate):
     error = np.inf
     iteration = 0
     iter_list = [iteration]
-    epsilon = 1e-5
+    epsilon = 2e-6
 
     while error > epsilon:
         cost_grad_vec = grad_cost(0.01, T_new)
@@ -185,6 +197,7 @@ def grad_descent(coeff, t_estimate):
         T_list_par.append(T_new[1])
 
         error = np.linalg.norm((T_new - T_old)**2) / np.linalg.norm((T_old)**2)
+        iteration += 1
         print("error: ", error)
         print("iteration: ", iteration)
         print("perp, par: ", T_new)
@@ -192,22 +205,26 @@ def grad_descent(coeff, t_estimate):
         print("change", coeff * cost_grad_vec)
         print("predicted new T_new", coeff * cost_grad_vec)
         print("")
-        iteration += 1
         iter_list.append(iteration)
 
     print("final perp, par: ", T_new)
-    fig2 = plt.figure("Iterative Temperature Reconstruction")
-    fig2.gca().plot(iter_list, T_list_par, marker='x', label=r"$T_{\parallel}$")
+    fig2 = plt.figure("Iterative Perp Temperature Reconstruction")
+    fig3 = plt.figure("Iterative Par Temperature Reconstruction")
+    fig3.gca().plot(iter_list, T_list_par, marker='x', label=r"$T_{\parallel}$")
     fig2.gca().plot(iter_list, T_list_perp, marker='x', label=r"$T_{\perp}$")
-    fig2.gca().plot([0, 2], [2.4e5, 2.4e5], 'b--', label=r"$True T_{\perp}$")
-    fig2.gca().plot([0, 2], [1.7e5, 1.7e5], 'b--', label=r"$True T_{\parallel}$")
+    fig2.gca().plot([0, np.max(iter_list)], [2.4e5, 2.4e5], 'b--', label=r"$True T_{\perp}$")
+    fig3.gca().plot([0, np.max(iter_list)], [1.7e5, 1.7e5], 'b--', label=r"$True T_{\parallel}$")
     fig2.gca().set_xlabel("Number of iterations")
+    fig3.gca().set_xlabel("Number of iterations")
     fig2.gca().set_ylabel("Reconstructed Temperature")
+    fig3.gca().set_ylabel("Reconstructed Temperature")
     fig2.gca().legend()
-    fig2.savefig("temp_recon.png")
+    fig3.gca().legend()
+    fig2.savefig("perp_temp_recon.png", bbox_inches="tight")
+    fig3.savefig("par_temp_recon.png", bbox_inches="tight")
     return(T_new)
 
 
-grad_descent(np.array([1e7, 1e5]), radial_temp)
-# heatmap()
+# grad_descent(np.array([5e8, 5e7]), radial_temp)
+heatmap()
 # cost_func_1D()
