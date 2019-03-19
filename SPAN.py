@@ -217,7 +217,7 @@ class SPAN:
             self.latest_coarse_count_matrix = count_matrix
 
         if save_data:
-            np.savetxt('SPANDataBulk-700B010n00-1m-100Tpar%.1ETperp%.1ECF%.0f.csv'
+            np.savetxt('SPANDataBulk-700BnnrealmrealTpar%.1ETperp%.1ECF%.0f.csv'
                        % (self.T_par, self.T_perp, self.core_fraction*10),
                           count_matrix, delimiter=',')
 
@@ -527,7 +527,7 @@ class SPAN:
             return {'mu1': p[0], 'mu2': p[1], 'std': p[2], 'coeff1': p[3], 'coeff2': p[4]}, max(count_array)
 
     def temperature_search(self, resolution_number=100, B_extent=500000, noise_filter_fraction=0.01, direction='both',
-                           mode='default', plot_brightest=False, plot_temperatures=True):
+                           mode='default', plot_brightest=False, plot_temperatures=True, bimax_fitting=True):
         if mode is 'default':
             if self.latest_count_matrix is not None:
                 count_matrix = self.latest_count_matrix
@@ -590,15 +590,17 @@ class SPAN:
         v_mid_arr = (low_v_arr + high_v_arr) / 2
         v_mid_arr_km = v_mid_arr / 1e3
 
-        def BixMaxFit(x, mu1, mu2, std, coeff1, coeff2):
-            return coeff1 * np.exp(-np.square(x - mu1) / (2 * np.square(std))) \
-                   + coeff2 * np.exp(-np.square(x - mu2) / (2 * np.square(std)))
+        def BixMaxFit(x, mu1, mu2, std, coeff1, coeff2, cf):
+            return coeff1 * cf * np.exp(-np.square(x - mu1) / (2 * np.square(std))) \
+                   + coeff2 * (1-cf) * np.exp(-np.square(x - mu2) / (2 * np.square(std)))
+
+        def MaxFit(x, mu, coeff, std):
+            return coeff * np.exp(-np.square(x - mu) / (2 * np.square(std)))
 
         colours = ['b', 'y', 'tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
                    'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
 
-        par_fig = plt.figure()
-        perp_fig = plt.figure()
+        plt.subplot(2, 1, 1)
 
         if direction is 'both' or 'parallel':
             parallel_x = scale_array*B_nm_x
@@ -651,23 +653,34 @@ class SPAN:
                                                  phi_high=high_phi_arr[phi])
                     count_array[n] = value
 
+                print(brightest_count)
+                print(count_array)
+
                 if any(count_array > noise_filter_fraction*brightest_count):
                     if plot_temperatures:
-                        par_fig.plot(v_mid_arr_km[count_array != 0], count_array[count_array != 0],
-                                     marker='o', label='Measured: Theta %i, Phi %i' % (theta, phi),
-                                     alpha=0.5, color=colours[colour_index])
+                        plt.plot(v_mid_arr_km[count_array != 0], count_array[count_array != 0],
+                                 marker='o', label='Measured: Theta %i, Phi %i' % (theta, phi),
+                                 alpha=0.5, color=colours[colour_index])
 
-                    p, c = spo.curve_fit(BixMaxFit, v_mid_arr, count_array,
-                                         p0=(700000, 750000, 37000, max(count_array), max(count_array)/50),
-                                         maxfev=10000)
+                    if bimax_fitting:
+                        p, c = spo.curve_fit(BixMaxFit, v_mid_arr, count_array,
+                                             p0=(700000, 750000, 37000, max(count_array), max(count_array)/50, 0.8),
+                                             maxfev=10000)
+                    else:
+                        p, c = spo.curve_fit(MaxFit, v_mid_arr, count_array,
+                                             p0=(700000, max(count_array), 37000),
+                                             maxfev=10000)
                     print(p)
 
                     if plot_temperatures:
-                        fitted_data = BixMaxFit(np.linspace(0, max(v_mid_arr), 1000), *p)
-                        par_fig.plot(np.linspace(0, max(v_mid_arr), 1000)[fitted_data != 0]/1e3,
-                                     fitted_data[fitted_data != 0],
-                                     label="Fitted: Theta %i, Phi %i, with width %.3g %s"
-                                     % (theta, phi, p[2]/1e3, 'km/s'), alpha=0.5, color=colours[colour_index])
+                        if bimax_fitting:
+                            fitted_data = BixMaxFit(np.linspace(0, max(v_mid_arr), 1000), *p)
+                        else:
+                            fitted_data = MaxFit(np.linspace(0, max(v_mid_arr), 1000), *p)
+                        plt.plot(np.linspace(0, max(v_mid_arr), 1000)[fitted_data != 0]/1e3,
+                                 fitted_data[fitted_data != 0],
+                                 label="Fitted: Theta %i, Phi %i, with width %.3g %s"
+                                 % (theta, phi, p[2]/1e3, 'km/s'), alpha=0.5, color=colours[colour_index])
 
                     cell_dict = {}
                     cell_dict.update({'theta': theta})
@@ -684,11 +697,11 @@ class SPAN:
                     print(df_list)
 
             if plot_temperatures:
-                par_fig.xlabel('Velocty, km/s')
-                par_fig.ylabel('Count')
-                par_fig.title('Count vs Velocity plot for finding paralllel temperatures')
+                plt.xlabel('Velocty, km/s')
+                plt.ylabel('Count')
+                plt.title('Count vs Velocity plot for finding paralllel temperatures')
 
-                par_fig.legend(loc='upper right')
+                plt.legend(loc='upper right')
 
             cell_df = pd.DataFrame(df_list)
             print(cell_df)
@@ -716,12 +729,35 @@ class SPAN:
 
             closest_x, closest_y, closest_z = sph_to_cart(closest_radius, closest_mid_theta, closest_mid_phi)
             print(closest_x, closest_y, closest_z)
-            parallel_temp_ms = 2*np.sqrt(np.square(bulk_x - closest_x) +
-                                         np.square(bulk_y - closest_y) +
-                                         np.square(bulk_z - closest_z))
+            parallel_temp_ms = np.sqrt(np.square(bulk_x - closest_x) +
+                                       np.square(bulk_y - closest_y) +
+                                       np.square(bulk_z - closest_z))
             parallel_temp_k = cst.m_p * np.square(parallel_temp_ms) / cst.k
-            print('parallel_temp = ', parallel_temp_ms, 'm/s, ',
+            print('rough parallel temp = ', parallel_temp_ms, 'm/s, ',
                   parallel_temp_k, 'K')
+
+            cell_df['x'], _, _ = sph_to_cart(cell_df['mu1'],
+                                             mid_theta_arr[int(other_pixels_df.iloc[closest_index]['theta'])],
+                                             mid_phi_arr[int(other_pixels_df.iloc[closest_index]['phi'])])
+
+            _, cell_df['y'], _ = sph_to_cart(cell_df['mu1'],
+                                             mid_theta_arr[int(other_pixels_df.iloc[closest_index]['theta'])],
+                                             mid_phi_arr[int(other_pixels_df.iloc[closest_index]['phi'])])
+
+            _, _, cell_df['z'] = sph_to_cart(cell_df['mu1'],
+                                             mid_theta_arr[int(other_pixels_df.iloc[closest_index]['theta'])],
+                                             mid_phi_arr[int(other_pixels_df.iloc[closest_index]['phi'])])
+
+            cell_df['delta_v'] = np.sqrt(np.square(cell_df[cell_df['brightest_pixel']]['x'] - cell_df['x']) +
+                                       np.square(cell_df[cell_df['brightest_pixel']]['y'] - cell_df['y']) +
+                                       np.square(cell_df[cell_df['brightest_pixel']]['z'] - cell_df['z']))
+
+            parallel_delta_v = np.squeeze(cell_df['delta_v'].values)
+            parallel_max_count = np.squeeze(cell_df['max_count'].values)
+
+            plt.plot(parallel_delta_v, parallel_max_count)
+
+        plt.subplot(2, 1, 2)
 
         if direction is 'both' or 'perpendicular':
             B_nm_x, B_nm_y, B_nm_z = np.cross(np.array([B_nm_x, B_nm_y, B_nm_z]),
@@ -781,21 +817,30 @@ class SPAN:
 
                 if any(count_array > noise_filter_fraction * brightest_count):
                     if plot_temperatures:
-                        perp_fig.plot(v_mid_arr_km[count_array != 0], count_array[count_array != 0],
-                                      marker='o', label='Measured: Theta %i, Phi %i' % (theta, phi),
-                                      alpha=0.5, color=colours[colour_index])
+                        plt.plot(v_mid_arr_km[count_array != 0], count_array[count_array != 0],
+                                 marker='o', label='Measured: Theta %i, Phi %i' % (theta, phi),
+                                 alpha=0.5, color=colours[colour_index])
 
-                    p, c = spo.curve_fit(BixMaxFit, v_mid_arr, count_array,
-                                         p0=(700000, 750000, 37000, max(count_array), max(count_array) / 50),
-                                         maxfev=10000)
+                    if bimax_fitting:
+                        p, c = spo.curve_fit(BixMaxFit, v_mid_arr, count_array,
+                                             p0=(700000, 750000, 37000, max(count_array), max(count_array)/50, 0.8),
+                                             maxfev=10000)
+                    else:
+                        p, c = spo.curve_fit(MaxFit, v_mid_arr, count_array,
+                                             p0=(700000, max(count_array), 37000),
+                                             maxfev=10000)
+
                     print(p)
 
                     if plot_temperatures:
-                        fitted_data = BixMaxFit(np.linspace(0, max(v_mid_arr), 1000), *p)
-                        perp_fig.plot(np.linspace(0, max(v_mid_arr), 1000)[fitted_data != 0] / 1e3,
-                                      fitted_data[fitted_data != 0],
-                                      label="Fitted: Theta %i, Phi %i, with width %.3g %s"
-                                            % (theta, phi, p[2] / 1e3, 'km/s'), alpha=0.5, color=colours[colour_index])
+                        if bimax_fitting:
+                            fitted_data = BixMaxFit(np.linspace(0, max(v_mid_arr), 1000), *p)
+                        else:
+                            fitted_data = MaxFit(np.linspace(0, max(v_mid_arr), 1000), *p)
+                        plt.plot(np.linspace(0, max(v_mid_arr), 1000)[fitted_data != 0] / 1e3,
+                                 fitted_data[fitted_data != 0],
+                                 label="Fitted: Theta %i, Phi %i, with width %.3g %s"
+                                       % (theta, phi, p[2] / 1e3, 'km/s'), alpha=0.5, color=colours[colour_index])
 
                     cell_dict = {}
                     cell_dict.update({'theta': theta})
@@ -811,11 +856,11 @@ class SPAN:
                     df_list.append(cell_dict)
 
             if plot_temperatures:
-                perp_fig.xlabel('Velocty, km/s')
-                perp_fig.ylabel('Count')
-                perp_fig.title('Count vs Velocity plot for finding perpendicular temperatures')
+                plt.xlabel('Velocty, km/s')
+                plt.ylabel('Count')
+                plt.title('Count vs Velocity plot for finding perpendicular temperatures')
 
-                perp_fig.legend(loc='upper right')
+                plt.legend(loc='upper right')
 
             cell_df = pd.DataFrame(df_list)
             print(cell_df)
@@ -837,17 +882,19 @@ class SPAN:
             print(closest_index, closest_max_count)
 
             closest_radius = other_pixels_df.iloc[closest_index]['mu1']
-            closest_mid_theta = mid_theta_arr[int(other_pixels_df.iloc[closest_index]['theta'])]
-            closest_mid_phi = mid_phi_arr[int(other_pixels_df.iloc[closest_index]['phi'])]
-            print(closest_mid_theta, closest_mid_phi)
+            closest_theta_index = int(other_pixels_df.iloc[closest_index]['theta'])
+            closest_mid_theta = mid_theta_arr[closest_theta_index]
+            closest_phi_index = int(other_pixels_df.iloc[closest_index]['phi'])
+            closest_mid_phi = mid_phi_arr[closest_phi_index]
+            print(closest_theta_index, closest_mid_theta, closest_phi_index, closest_mid_phi)
 
             closest_x, closest_y, closest_z = sph_to_cart(closest_radius, closest_mid_theta, closest_mid_phi)
             print(closest_x, closest_y, closest_z)
-            perpendicular_temp_ms = 2 * np.sqrt(np.square(bulk_x - closest_x) +
+            perpendicular_temp_ms = np.sqrt(np.square(bulk_x - closest_x) +
                                                 np.square(bulk_y - closest_y) +
                                                 np.square(bulk_z - closest_z))
-            peprendicular_temp_k = cst.m_p * np.square(perpendicular_temp_ms) / cst.k
-            print('perpendicular = ', perpendicular_temp_ms , 'm/s, ',
+            peprendicular_temp_k = 0.5 * cst.m_p * np.square(perpendicular_temp_ms) / cst.k
+            print('rough perpendicular temperature = ', perpendicular_temp_ms , 'm/s, ',
                   peprendicular_temp_k, 'K')
 
         plt.show()
@@ -858,12 +905,12 @@ if __name__ == '__main__':
     z_h = 1.38e6
     vA = 88000
     mode = 'default'
-    device = SPAN(v_A=vA, T_par=170e3, T_perp=240e3, n=92e6, core_fraction=0.8,
-                  bulk_velocity_arr=np.array([-700000, -700000, 0]))
+    device = SPAN(v_A=vA, T_par=170e3, T_perp=240e3, n=92e6, core_fraction=1,
+                  bulk_velocity_arr=np.array([-700000, 0, 0]))
     #device.count_measure(v_low=z_l, v_high=z_h, mode=mode, ignore_SPAN_pos=False)
-    device.load_data('/home/henry/MSci-SolarWind/SPANDataBulk-700B010n00-1m-100Tpar1.7E+05Tperp2.4E+05CF8.csv')
-    device.temperature_search(resolution_number=100, B_extent=1000000, mode=mode, direction='both',
-                              noise_filter_fraction=0.001,
-                              plot_brightest=False, plot_temperatures=True)
+    device.load_data('/home/henry/MSci-SolarWind/SPANDataBulk-700BnnrealmrealTpar1.7E+05Tperp2.4E+05CF10.csv')
+    device.temperature_search(resolution_number=100, B_extent=300000, mode=mode, direction='parallel',
+                              noise_filter_fraction=0.0001, bimax_fitting=False,
+                              plot_brightest=False, plot_temperatures=False)
     device.plot_data(mode=mode, savefig=True,
                      saveloc='/home/henry/MSci-SolarWind/SPAN_Plots/Test.png')
