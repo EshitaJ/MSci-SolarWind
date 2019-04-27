@@ -1,6 +1,6 @@
 import os
 import numpy as np
-# import seaborn as sns
+import seaborn as sns
 import matplotlib.pyplot as plt
 import scipy.integrate as spi
 import scipy.constants as cst
@@ -10,7 +10,7 @@ from scipy.stats import norm
 import Global_Variables as gv
 from SPC_Plates import *
 from VDF import *
-# sns.set()
+sns.set()
 
 
 def current_vdensity(vz, vy, vx, v, is_core, n, perp, par):
@@ -18,7 +18,7 @@ def current_vdensity(vz, vy, vx, v, is_core, n, perp, par):
     return cst.e * np.sqrt(vz**2 + vy**2 + vx**2) * Area(vz, vy, vx) * df
 
 
-def integrand_plate(vz, theta, phi, v_alf, n, perp, par):
+def integrand_plate(vz, phi, theta, v_alf, n, perp, par):
     """integral returns the current in a given detector plate"""
     cos_theta = np.cos(theta)
     sin_theta = np.sin(theta)
@@ -53,31 +53,31 @@ def Signal_Count(bounds, is_core, plates, plate, perp, par):
     def integration(low_bound, high_bound, perp, par):
         if plates:
             if plate == 1:
-                low_phi = -pi / 2
-                high_phi = -pi
-                low_theta = 0.0
-                high_theta = -pi / 2
-            elif plate == 2:
-                low_phi = -pi
-                high_phi = -pi * (3 / 2)
-                low_theta = -pi / 2
-                high_theta = -pi
-            elif plate == 3:
-                low_phi = -pi * (3 / 2)
-                high_phi = -pi * 2
-                low_theta = 0
-                high_theta = -pi / 2
-            elif plate == 4:
                 low_phi = 0
-                high_phi = -pi / 2
-                low_theta = -pi / 2
-                high_theta = -pi
+                high_phi = pi / 2
+                low_theta = 0.0
+                high_theta = pi / 3
+            elif plate == 2:
+                low_phi = pi / 2
+                high_phi = pi
+                low_theta = 0
+                high_theta = pi / 3
+            elif plate == 3:
+                low_phi = pi
+                high_phi = pi * (3 / 2)
+                low_theta = 0
+                high_theta = pi / 3
+            elif plate == 4:
+                low_phi = pi * (3 / 2)
+                high_phi = pi * 2
+                low_theta = 0
+                high_theta = pi / 3
 
             I_k = spi.tplquad(integrand_plate,
-                              low_phi, high_phi,
-                              lambda phi: low_theta, lambda phi: high_theta,
-                              lambda phi, theta: low_bound,  # vz
-                              lambda phi, theta: high_bound,
+                              low_theta, high_theta,
+                              lambda theta: low_phi, lambda theta: high_phi,
+                              lambda theta, phi: low_bound,  # vz
+                              lambda theta, phi: high_bound,
                               args=(va, constants["n"], perp, par))
         else:
                 I_k = spi.tplquad(current_vdensity,
@@ -122,7 +122,7 @@ def Data(filename, velocities, is_core, plates, plate,
                 mydict = Param_read(filename) if load else Param_write(filename)
                 signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                # np.savetxt('%s_quad_1.csv' % filename, signal)
+                np.savetxt('%s_quad_1.csv' % filename, signal)
                 print("Saved, quad 1 data")
         if plate == 2:
             if load:
@@ -131,7 +131,7 @@ def Data(filename, velocities, is_core, plates, plate,
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                # np.savetxt('%s_quad_2.csv' % filename, signal)
+                np.savetxt('%s_quad_2.csv' % filename, signal)
                 print("Saved, quad 2 data")
         if plate == 3:
             if load:
@@ -140,7 +140,7 @@ def Data(filename, velocities, is_core, plates, plate,
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                # np.savetxt('%s_quad_3.csv' % filename, signal)
+                np.savetxt('%s_quad_3.csv' % filename, signal)
                 print("Saved, quad 3 data")
         if plate == 4:
             if load:
@@ -149,7 +149,7 @@ def Data(filename, velocities, is_core, plates, plate,
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                # np.savetxt('%s_quad_4.csv' % filename, signal)
+                np.savetxt('%s_quad_4.csv' % filename, signal)
                 print("Saved, quad 4 data")
 
     else:
@@ -220,6 +220,19 @@ def Plot(E_plot, plot_total, is_core, plates,
         band_width = np.diff(vz_k)
         fit_array = fit_array_v
 
+    Bxz = round(np.degrees(np.arctan(gv.B[0]/gv.B[2])), 2)
+    Byz = round(np.degrees(np.arctan(gv.B[1]/gv.B[2])), 2)
+        # T_perp = "%.1E" % constants['T_perp']
+        # T_par = "%.1E" % constants['T_par']
+    vx = gv.v_sw[0]/1e3
+    vy = gv.v_sw[1]/1e3
+    vz = gv.v_sw[2]/1e3
+    bvx = gv.beam_v[0]/1e3
+    bvy = gv.beam_v[1]/1e3
+    bvz = gv.beam_v[2]/1e3
+    fraction = gv.core_fraction
+    new_fit_array = fit_array[fit_array > 800]
+
     np.savetxt("./Data/Band_Centres_%s_%s_%s.csv"
                % ("Energy" if E_plot else "Velocity",
                   "N_%g" % N, "Field_%s" % Rot),
@@ -249,6 +262,13 @@ def Plot(E_plot, plot_total, is_core, plates,
         V_Tot = V*total_quads
         W_Tot = W*total_quads
 
+        tq = Signal_Count(vz_m, True, False, 1, perp, par) * 1e9
+        area = 1.36e-4  # m^2
+        den = total_quads / (band_centres * 1e3)
+        nden1 = np.sum(den) / (1e9 * cst.e * area)
+        print("difference: ", ((np.max(tq) - np.max(total_quads))/np.max(tq)))
+        print("n: ", nden1)
+
         """Sloppy estimate of fraction of population in core"""
         cut_off = 840
         core_guess = total_quads[band_centres < cut_off]
@@ -256,81 +276,147 @@ def Plot(E_plot, plot_total, is_core, plates,
         fraction_guess = np.sum(core_guess) / np.sum(total_quads)
         # print("Core fraction estimate: ", fraction_guess)
         plt.figure(1)
-        plt.plot(band_centres, V_Tot, 'xkcd:diarrhea', label='V * Total', marker='x')
-        plt.plot(band_centres, W_Tot, 'xkcd:hot pink', label='W * Total', marker='x')
-        Fit(E_plot, band_centres, V_Tot, fit_array,
+        plt.plot(band_centres, V_Tot, 'xkcd:diarrhea', label='V * I', marker='x')
+        plt.plot(band_centres, W_Tot, 'xkcd:hot pink', label='W * I', marker='x')
+        Fit(E_plot, band_centres, V_Tot, fit_array, "",
             mu1_guess, variance_guess, 0.1)
-        Fit(E_plot, band_centres, W_Tot, fit_array,
+        Fit(E_plot, band_centres, W_Tot, fit_array, "",
             mu1_guess, variance_guess, 0.1)
         plt.ylabel("Current Difference (nA)")
+        plt.xlabel("$v_{z}$ (km/s)")
         plt.legend()
 
         plt.figure(2)
         plt.plot(band_centres, V, 'xkcd:diarrhea', label='V')
         plt.plot(band_centres, W, 'xkcd:hot pink', label='W')
-        plt.plot(band_centres, quad1/total_quads, 'k-', label='Quadrant 1')
-        plt.plot(band_centres, quad2/total_quads, 'r-', label='Quadrant 2')
-        plt.plot(band_centres, quad3/total_quads, 'g-', label='Quadrant 3')
-        plt.plot(band_centres, quad4/total_quads, 'b-', label='Quadrant 4')
+        plt.plot(band_centres, quad1/total_quads, 'k--', label='$I_{1}$')
+        plt.plot(band_centres, quad2/total_quads, 'r--', label='$I_{2}$')
+        plt.plot(band_centres, quad3/total_quads, 'g--', label='$I_{3}$')
+        plt.plot(band_centres, quad4/total_quads, 'b--', label='$I_{4}$')
         plt.ylabel("Fractional Current")
-        plt.legend()
-        # plt.plot([700, 700], [-1, 1], '--')
-        # plt.plot(band_centres, np.ones(len(band_centres)) * 0.25, '--')
 
-        # p = (1 + V[np.argmax(total_quads)]) / 2
-        # d = (quad1 + quad2) / total_quads
-        # px = (1 + W[np.argmax(total_quads)]) / 2
-        # dx = (quad1 + quad4) / total_quads
-        # vy_estimate = norm.ppf(p) * gv.ythermal_speed / 1e3
-        # quad_estimate_vy = norm.ppf(d) * gv.ythermal_speed / 1e3
-        # vx_estimate = norm.ppf(px) * gv.xthermal_speed / 1e3
-        # quad_estimate_vx = norm.ppf(dx) * gv.xthermal_speed / 1e3
-        # print("y average: ", np.average(vy_estimate))
-        # print("x average: ", np.average(vx_estimate))
+        xlabel = "{x}".format(x="Energy (eV)" if E_plot else "$V_z$ (km/s)")
+        plt.xlabel(xlabel)
+        plt.legend(title="%s B field at (%s$^\\circ$, %s$^\\circ$)"
+                   "\n from SPC normal"
+                   "\n $T_{\perp}$ = 2.4e5 K "r"$\rightarrow 44.5$ km/s"
+                   "\n $T_{\parallel}$ = 1.7e5 K "r"$\rightarrow 37.5$ km/s"
+                   "\n Core velocity [%.0f, %.0f, %.0f] km/s"
+                    "\n %s"
+                    "\n %s"
+                   % (
+                      "Perturbed" if gv.perturbed else "",
+                      Bxz, Byz,
+                      vx, vy, vz,
+                      "Beam velocity [%.1f, %.1f, %.1f] km/s" % (
+                        bvx, bvy, bvz) if gv.total else "",
+                      "Core fraction = %.2f" % (fraction) if gv.total else ""),
+                   loc='center left', bbox_to_anchor=(1, 0.5))
 
-        # plt.plot(band_centres, vy_estimate, '-k', label='Using V')
-        # plt.plot(band_centres, quad_estimate_vy, 'ro', label='Using quadrants 1 and 2')
-        # plt.plot(band_centres, vx_estimate, '-g', label='Using W')
-        # plt.plot(band_centres, quad_estimate_vx, 'bo', label='Using quadrants 1 and 4')
-        # plt.plot([100, 1200], [-1, 1], '--')
-        # plt.plot([100, 1200], [0, 0], '--')
-        # plt.plot([700, 700], [-75, 75], '--')
-        # plt.ylabel('Recovered solar wind bulk speed (km/s)')
+        p = (1 + V) / 2
+        d = (quad1 + quad2) / total_quads
+        px = (1 + W) / 2
+        dx = (quad1 + quad4) / total_quads
+        vy_estimate = norm.ppf(p) * gv.ythermal_speed / 1e3
+        quad_estimate_vy = norm.ppf(d) * gv.ythermal_speed / 1e3
+        vx_estimate = norm.ppf(px) * gv.xthermal_speed / 1e3
+        quad_estimate_vx = norm.ppf(dx) * gv.xthermal_speed / 1e3
+        print("y: ", vy_estimate[np.argmax(total_quads)])
+        print("x: ", vx_estimate[np.argmax(total_quads)])
+        plt.figure(5)
+        plt.plot(band_centres, vy_estimate, '-k', label='Using V')
+        plt.plot(band_centres, quad_estimate_vy, 'rx', label='Using $I_{1}$ and $I_{2}$')
+        plt.plot(band_centres, vx_estimate, '-g', label='Using W')
+        plt.plot(band_centres, quad_estimate_vx, 'bx', label='Using $I_{1}$ and $I_{4}$')
+        plt.plot(700, 50, 'ko', label='True $v_{x}$')
+        plt.plot(700, 50, 'r*', label='True $v_{y}$')
+        plt.ylabel('Recovered solar wind bulk speed (km/s)')
+        xlabel = "{x}".format(x="Energy (eV)" if E_plot else "$V_z$ (km/s)")
+        plt.xlabel(xlabel)
+
+        plt.legend(title="%s B field at (%s$^\\circ$, %s$^\\circ$)"
+                   "\n from SPC normal"
+                   "\n $T_{\perp}$ = 2.4e5 K "r"$\rightarrow 44.5$ km/s"
+                   "\n $T_{\parallel}$ = 1.7e5 K "r"$\rightarrow 37.5$ km/s"
+                   "\n Core velocity [%.0f, %.0f, %.0f] km/s"
+                   "\n %s"
+                   "\n %s"
+                   "Recovered $v_{x}$ of %.1f"
+                   "\n Recovered $v_{y}$ of %.1f"
+                   % (
+                      "Perturbed" if gv.perturbed else "",
+                      Bxz, Byz,
+                      vx, vy, vz,
+                      "Beam velocity [%.1f, %.1f, %.1f] km/s" % (
+                        bvx, bvy, bvz) if gv.total else "",
+                      "Core fraction = %.2f" % (fraction) if gv.total else "",
+                      vx_estimate[np.argmax(total_quads)],
+                      vy_estimate[np.argmax(total_quads)]),
+                   loc='center left', bbox_to_anchor=(1, 0.5))
 
         plt.figure(3)
-        plt.plot(band_centres, quad1, 'k--', label='Quadrant 1')
-        plt.plot(band_centres, quad2, 'ro', label='Quadrant 2')
-        plt.plot(band_centres, quad3, 'gx', label='Quadrant 3')
-        plt.plot(band_centres, quad4, 'b-', label='Quadrant 4')
+        plt.plot(band_centres, quad1, 'kx', label='$I_{1}$')
+        plt.plot(band_centres, quad2, 'ro', label='$I_{2}$')
+        plt.plot(band_centres, quad3, 'go', label='$I_{3}$')
+        plt.plot(band_centres, quad4, 'bx', label='$I_{4}$')
+        q1 = Fit(gv.E_plot, band_centres, quad1, fit_array, "$I_{1}$",
+                 band_centres[np.argmax(quad1)],
+                 variance_guess, np.max(quad1))
+        q2 = Fit(gv.E_plot, band_centres, quad2, fit_array, "$I_{2}$",
+                 band_centres[np.argmax(quad2)],
+                 variance_guess, np.max(quad2))
+        q3 = Fit(gv.E_plot, band_centres, quad3, fit_array, "$I_{3}$",
+                 band_centres[np.argmax(quad3)],
+                 variance_guess, np.max(quad3))
+        q4 = Fit(gv.E_plot, band_centres, quad4, fit_array, "$I_{4}$",
+                 band_centres[np.argmax(quad4)],
+                 variance_guess, np.max(quad4))
         plt.ylabel("Current (nA)")
-        q1, q2, q3, q4 = 0, 0, 0, 0
-        # n = 0.1
-        #
-        # q1 = Total_Fit(E_plot, band_centres, quad1, fit_array, False,
-        #                mu1_guess, mu2_guess, variance_guess,
-        #                np.max(quad1), np.max(quad1))
-        # q2 = Total_Fit(E_plot, band_centres, quad2, fit_array, False,
-        #                mu1_guess, mu2_guess, variance_guess,
-        #                np.max(quad2), np.max(quad2))
-        # q3 = Total_Fit(E_plot, band_centres, quad3, fit_array, False,
-        #                mu1_guess, mu2_guess, variance_guess,
-        #                np.max(quad3), np.max(quad3))
-        # q4 = Total_Fit(E_plot, band_centres, quad4, fit_array, False,
-        #                mu1_guess, mu2_guess, variance_guess,
-        #                0.1*np.max(quad4), 0.01*np.max(quad4))
-
-        plt.legend()
+        xlabel = "{x}".format(x="Energy (eV)" if E_plot else "$V_z$ (km/s)")
+        plt.xlabel(xlabel)
+        plt.legend(title="%s B field at (%s$^\\circ$, %s$^\\circ$)"
+           "\n from SPC normal"
+           "\n $T_{\perp}$ = 2.4e5 K "r"$\rightarrow 44.5$ km/s"
+           "\n $T_{\parallel}$ = 1.7e5 K "r"$\rightarrow 37.5$ km/s"
+           "\n Core velocity [%.0f, %.0f, %.0f] km/s"
+            "\n %s"
+            "\n %s"
+           % (
+              "Perturbed" if gv.perturbed else "",
+              Bxz, Byz,
+              vx, vy, vz,
+              "Beam velocity [%.1f, %.1f, %.1f] km/s" % (
+                bvx, bvy, bvz) if gv.total else "",
+              "Core fraction = %.2f" % (fraction) if gv.total else ""),
+           loc='center left', bbox_to_anchor=(1, 0.5))
 
         plt.figure(4)
-        plt.plot(band_centres, total_quads, 'bx', label='Total Current')
-        n = 0.1 if par > 3e5 else 0.01
-        tf = Total_Fit(E_plot, band_centres, total_quads, fit_array, True,
-            mu1_guess, mu2_guess, variance_guess,
-            n*np.max(total_quads), 0.1*n*np.max(total_quads))
+        plt.plot(band_centres, total_quads, 'bx', label='Total Current, I')
+        Fit(E_plot, band_centres, total_quads, fit_array, "",
+                 band_centres[np.argmax(total_quads)],
+                 variance_guess, np.max(total_quads))
 
-        print("max: ", np.argmax(total_quads), np.max(total_quads), tf[3])
+        # print("max: ", np.argmax(total_quads), np.max(total_quads), tf[3])
+        xlabel = "{x}".format(x="Energy (eV)" if E_plot else "$V_z$ (km/s)")
+        plt.xlabel(xlabel)
         plt.ylabel("Current (nA)")
-        plt.legend()
+        plt.legend(title="%s B field at (%s$^\\circ$, %s$^\\circ$)"
+                   "\n from SPC normal"
+                   "\n $T_{\perp}$ = 2.4e5 K "r"$\rightarrow 44.5$ km/s"
+                   "\n $T_{\parallel}$ = 1.7e5 K "r"$\rightarrow 37.5$ km/s"
+                   "\n Core velocity:"
+                   " [%.0f, %.0f, %.0f] km/s"
+                    "\n %s"
+                    "\n %s"
+                   % (
+                      "Perturbed" if gv.perturbed else "",
+                      Bxz, Byz,
+                      vx, vy, vz,
+                      "Beam velocity:"
+                      " [%.1f, %.1f, %.1f] km/s" % (
+                        bvx, bvy, bvz) if gv.total else "",
+                      "Core fraction = %.2f" % (fraction) if gv.total else ""),
+                   loc='center left', bbox_to_anchor=(1, 0.5))
         # plt.plot(band_centres, total_quads, label='Sum of quadrants')
 
         # # quad_estimate_vx = norm.ppf(dx) * gv.xthermal_speed / 1e3
@@ -428,4 +514,5 @@ def Plot(E_plot, plot_total, is_core, plates,
     #               % np.average(vy_estimatebeam) if gv.total else ""),
     #            loc='center left', bbox_to_anchor=(1, 0.5))
 
-    return q1, q2, q3, q4, tf
+    # return tq, band_centres
+    return q1, q2, q3, q4

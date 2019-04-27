@@ -1,22 +1,13 @@
 import numpy as np
 import Global_Variables as gv
 import scipy.constants as cst
+import scipy.integrate as spi
 from SPC_Fits import *
+import SPC
 
-print(gv.comment)
-n1 = 0.03
-n2 = 0.01
+total_quads, band_centres = SPC.main(2.4e5, 1.7e5, "n_test_", False)
 
-band_centres = np.genfromtxt("./Data/Band_Centres_%s_%s_%s.csv"
-                             % ("Energy" if gv.E_plot else "Velocity",
-                                "N_%g" % gv.N, "Field_%s" % gv.Rot))
-
-data1 = np.genfromtxt('%s_quad_1.csv' % filename)
-data2 = np.genfromtxt('%s_quad_2.csv' % filename)
-data3 = np.genfromtxt('%s_quad_3.csv' % filename)
-data4 = np.genfromtxt('%s_quad_4.csv' % filename)
-total_quads = data1 + data2 + data3 + data4
-fit_array = np.linspace(np.min(band_centres), np.max(band_centres), gv.N)
+fit_array = np.linspace(0, 1500, 1e3)
 
 # core = Total_Fit(gv.E_plot, band_centres, total_quads, fit_array, gv.total,
 #                  gv.v_sw[2] / 1e3, gv.beam_v[2] / 1e3, 40,  n1, n2)[1]
@@ -25,27 +16,38 @@ fit_array = np.linspace(np.min(band_centres), np.max(band_centres), gv.N)
 #     beam = Total_Fit(gv.E_plot, band_centres, total_quads, fit_array, gv.total,
 #                      gv.v_sw[2] / 1e3, gv.beam_v[2] / 1e3, 40, n1, n2)[1]
 
-vel = np.sqrt((2 * fit_array * gv.J)
-              / cst.m_p) if gv.E_plot else fit_array * 1e3
+# vel = fit_array * 1e3
 
-v = np.linalg.norm(gv.v_sw)
+# v = np.linalg.norm(gv.v_sw)
 
 area = 1.36e-4  # m^2
 
+# variance_guess = 40
 
-d1 = Total_Fit(gv.E_plot, band_centres, data1, fit_array, gv.total,
-               700, 900, 40, n1, n2)[0]
-d2 = Total_Fit(gv.E_plot, band_centres, data2, fit_array, gv.total,
-               700, 900, 40, n1, n2)[0]
-d3 = Total_Fit(gv.E_plot, band_centres, data3, fit_array, gv.total,
-               700, 900, 40, n1, n2)[0]
-d4 = Total_Fit(gv.E_plot, band_centres, data4, fit_array, gv.total,
-               700, 900, 40, n1, n2)[0]
+d1 = Fit(gv.E_plot, band_centres, total_quads, fit_array,
+         band_centres[np.argmax(total_quads)],
+         40, np.max(total_quads))[2]
+# d2 = Fit(gv.E_plot, band_centres, data2, fit_array,
+#          band_centres[np.argmax(data2)],
+#          variance_guess, np.max(data2))
+# d3 = Fit(gv.E_plot, band_centres, data3, fit_array,
+#          band_centres[np.argmax(data3)],
+#          variance_guess, np.max(data3))
+# d4 = Fit(gv.E_plot, band_centres, data4, fit_array,
+#          band_centres[np.argmax(data4)],
+#          variance_guess, np.max(data4))
 
+n_new = d1[0] / (700000 * 1e9 * cst.e * area) * (gv.N / 1.5)
 
-n1 = np.sum(d1 / (1e9 * cst.e * vel * area))
-n2 = np.sum(d2 / (1e9 * cst.e * vel * area))
-n3 = np.sum(d3 / (1e9 * cst.e * vel * area))
-n4 = np.sum(d4 / (1e9 * cst.e * vel * area))
+den = total_quads / (band_centres * 1e3)
+nden1 = np.sum(den) / (1e9 * cst.e * area)
+n3 = np.sum(np.gradient(total_quads, band_centres*1e3)) / (1e9 * cst.e * area)
+print("nden: ", nden1 / 1e7, n3 / 1e7, n_new / 1e7)
 
-print("n: ", n1, n2, n3, n4, n1+n2+n3+n4)
+# # vel = band_centres[np.argmax(total_quads)] * 1e3
+# n1 = np.sum(d1 / (1e9 * cst.e * vel * area))
+# n2 = np.sum(d2 / (1e9 * cst.e * vel * area))
+# n3 = np.sum(d3 / (1e9 * cst.e * vel * area))
+# n4 = np.sum(d4 / (1e9 * cst.e * vel * area))
+# n = np.sum((d1+d2+d3+d4) / (1e9 * cst.e * vel * area))
+# print("n: ", (n1+n2+n3+n4)/1e7, n/1e7)

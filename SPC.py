@@ -5,6 +5,12 @@ import numpy as np
 import Global_Variables as gv
 import scipy.constants as cst
 
+plt.rc('axes', titlesize=18)     # fontsize of the axes title
+plt.rc('axes', labelsize=18)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=16)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=16)
+plt.rc('legend', fontsize=16)
+plt.rc('font', size=16)
 
 def main(perp, par, comment, load):
 
@@ -14,12 +20,12 @@ def main(perp, par, comment, load):
     vbeam_peak = gv.beam_v[2] / 1e3
     Ecore_pk = (0.5 * cst.m_p * (vcore_peak*1e3)**2) / gv.J
     Ebeam_pk = (0.5 * cst.m_p * (vbeam_peak*1e3)**2) / gv.J
-    guess = (0.5 * cst.m_p * (40*1e3)**2) / gv.J
+    # guess = (0.5 * cst.m_p * (40*1e3)**2) / gv.J
 
     core_peak = Ecore_pk if gv.E_plot else vcore_peak
     beam_peak = Ebeam_pk if gv.E_plot else vbeam_peak
     # print("core, beam: ", core_peak, beam_peak)
-    sigma = (guess*2)**2 if gv.E_plot else 40
+    sigma = ((cst.k * par) / cst.m_p)**0.5 / 1e3
 
     par_dict = {
              'n': "%.2E" % gv.constants['n'],

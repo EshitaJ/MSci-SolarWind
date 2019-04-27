@@ -7,7 +7,7 @@ from Global_Variables import *
 from scipy.signal import find_peaks
 
 
-def Fit(E_plot, x_axis, data, fit_array, mu_guess, sg_guess, n_guess):
+def Fit(E_plot, x_axis, data, fit_array, label, mu_guess, sg_guess, n_guess):
     """Get FWHM of the data"""
 
     def gauss(x, N, mu, sg):
@@ -20,11 +20,18 @@ def Fit(E_plot, x_axis, data, fit_array, mu_guess, sg_guess, n_guess):
     func = gauss(fit_array, *p)
     sigma = p[2]
 
-    plt.plot(fit_array, func, '--',
-             label="Gaussian fit"
+    def g(x, N, mu, sg):
+        return gauss(x, N, mu, sg) / x
+    #
+    # integral = spi.quad(g, np.min(fit_array), np.max(fit_array),
+    #                                  args=(p[0], p[1], p[2]))
+
+    plt.plot(fit_array, func, '-',
+             label="%s Gaussian fit"
              "\n $v_{th}$ = %.01f %s"
-             % (sigma, "eV" if E_plot else "km/s"))
-    return func, sigma
+             % (label, sigma, "eV" if E_plot else "km/s"))
+    return p
+    # return func, sigma
 
 
 def Total_Fit(E_plot, x_axis, data, fit_array, is_total,
