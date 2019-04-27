@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import seaborn as sns
+# import seaborn as sns
 import matplotlib.pyplot as plt
 import scipy.integrate as spi
 import scipy.constants as cst
@@ -10,7 +10,7 @@ from scipy.stats import norm
 import Global_Variables as gv
 from SPC_Plates import *
 from VDF import *
-sns.set()
+# sns.set()
 
 
 def current_vdensity(vz, vy, vx, v, is_core, n, perp, par):
@@ -122,7 +122,7 @@ def Data(filename, velocities, is_core, plates, plate,
                 mydict = Param_read(filename) if load else Param_write(filename)
                 signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                np.savetxt('%s_quad_1.csv' % filename, signal)
+                # np.savetxt('%s_quad_1.csv' % filename, signal)
                 print("Saved, quad 1 data")
         if plate == 2:
             if load:
@@ -131,7 +131,7 @@ def Data(filename, velocities, is_core, plates, plate,
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                np.savetxt('%s_quad_2.csv' % filename, signal)
+                # np.savetxt('%s_quad_2.csv' % filename, signal)
                 print("Saved, quad 2 data")
         if plate == 3:
             if load:
@@ -140,7 +140,7 @@ def Data(filename, velocities, is_core, plates, plate,
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                np.savetxt('%s_quad_3.csv' % filename, signal)
+                # np.savetxt('%s_quad_3.csv' % filename, signal)
                 print("Saved, quad 3 data")
         if plate == 4:
             if load:
@@ -149,7 +149,7 @@ def Data(filename, velocities, is_core, plates, plate,
             else:
                 signal = Signal_Count(velocities, is_core, plates, plate, perp, par) * 1e9
 
-                np.savetxt('%s_quad_4.csv' % filename, signal)
+                # np.savetxt('%s_quad_4.csv' % filename, signal)
                 print("Saved, quad 4 data")
 
     else:
@@ -392,7 +392,7 @@ def Plot(E_plot, plot_total, is_core, plates,
 
         plt.figure(4)
         plt.plot(band_centres, total_quads, 'bx', label='Total Current, I')
-        Fit(E_plot, band_centres, total_quads, fit_array, "",
+        tf = Fit(E_plot, band_centres, total_quads, fit_array, "",
                  band_centres[np.argmax(total_quads)],
                  variance_guess, np.max(total_quads))
 
@@ -515,4 +515,4 @@ def Plot(E_plot, plot_total, is_core, plates,
     #            loc='center left', bbox_to_anchor=(1, 0.5))
 
     # return tq, band_centres
-    return q1, q2, q3, q4
+    return q1, q2, q3, q4, tf, band_centres

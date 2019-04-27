@@ -1,18 +1,45 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-import seaborn as sns
-sns.set()
+import sys
+# import seaborn as sns
+# sns.set()
 
-F = np.genfromtxt('_Big-deflection_F.csv')
+if len(sys.argv) != 3:
+    print("Please specify a resolution")
+    print("Usage: %s <resolution> <B field>" % tuple(sys.argv[1:]))
+    sys.exit(1)
+
+F = np.genfromtxt('%s_%s_F_nreco.csv' % (sys.argv[1], sys.argv[2]))
 # print(np.min(f), np.argmin(f))
 cmap = plt.cm.get_cmap('Blues', 2**16)
-tck = np.linspace(1e5, 4e5, 12)
-fig =plt.figure()
-plt.plot(170000, 240000, 'ro', label='Expected Minimum')
+
+min_t = 1e5
+max_t = 3e5
+nsamples = int(sys.argv[1])
+expected_min = (170000, 240000)
+
+tck = np.linspace(min_t, max_t, nsamples)
+fig = plt.figure()
+plt.plot(*expected_min, 'ro', label='Expected Minimum')
+
+min_arg = np.unravel_index(np.argmin(F), F.shape)
+print("Minimum value in mappable: %g, %g" % min_arg)
+print("True minimum temperature:  %g, %g" % expected_min)
+
+tx = (0.5 + np.array(min_arg[1])) * ((max_t - min_t) / nsamples) + min_t
+ty = max_t - (0.5 + np.array(min_arg[0])) * ((max_t - min_t) / nsamples)
+print("tx, ty: ", tx, ty)
+temp_arg = (0.5 + np.array(min_arg)) * ((max_t - min_t) / nsamples) + min_t
+print("Est. minimum temperature: %g, %g" % tuple(temp_arg[::-1].tolist()))
+
+
+# print("Corresponding temperature: %g, %g" % ())
 mappable = fig.gca().imshow(F, extent=[min(tck), max(tck),
                                        min(tck), max(tck)],
-                            cmap=cmap, norm=matplotlib.colors.LogNorm(np.amin(F), np.amax(F)))
+                            cmap=cmap, norm=matplotlib.colors.LogNorm(np.amin(F), np.amax(F)), origin="lower")
+
+plt.plot(tx, ty, 'bx', label='Estimated Minimum \n at ( %g (K), %g (K) )' % (tx, ty)) #tuple(temp_arg[::-1].tolist()))
 fig.colorbar(mappable, label="Cost function")
 fig.gca().set_xlabel("$T_{\parallel}$ (K)")
 fig.gca().set_ylabel("$T_{\perp}$ (K)")

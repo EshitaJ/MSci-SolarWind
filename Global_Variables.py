@@ -6,6 +6,7 @@ import os
 
 constants = {
     "n": 92e6,  # m^-3
+    # "n": 8.781e7,
     "B": 108e-9  # T
 }
 
@@ -20,11 +21,12 @@ perturbed = False
 comment = "final_"
 Rot = "Non-radial"
 # Rot = "Big-deflection"
-N = 100
+N = 30
 
 pi = np.pi
-xthermal_speed = ((cst.k * 2.4e5) / cst.m_p)**0.5
-ythermal_speed = ((cst.k * 2.4e5) / cst.m_p)**0.5
+rtemp = 225000
+xthermal_speed = ((cst.k * rtemp) / cst.m_p)**0.5
+ythermal_speed = ((cst.k * rtemp) / cst.m_p)**0.5
 # zthermal_speed = ((cst.k * constants["T_par"]) / cst.m_p)**0.5
 # radial_temp = zthermal_speed**2 * (cst.m_p / cst.k)
 # print("speed, temp: ", zthermal_speed, radial_temp)
@@ -64,7 +66,9 @@ va = np.linalg.norm(B0) / np.sqrt(cst.mu_0 * constants["n"] * cst.m_p)
 
 # v_sw = np.array([20000, 200000, 400000])  # solar wind bulk velocity in m/s
 # bulk_speed = np.array([15000, 20000, 700000])  # sw bulk velocity in m/s
-bulk_speed = np.array([50000, 50000, 700000])  # sw bulk velocity in m/s
+# bulk_speed = np.array([50000, 50000, 700000])  # sw bulk velocity in m/s
+bulk_speed = np.array([42900, 43200, 700000])  # sw bulk velocity in m/s
+
 v_sc = np.array([0, 0, 0])  # space craft velocity in m/s
 # alfvenic fluctuation
 dv = va * (-np.cos(theta_BR) + np.cos(theta_0)) * B/np.linalg.norm(B)

@@ -8,32 +8,36 @@ import Global_Variables as gv
 import itertools
 import scipy.constants as cst
 import multiprocessing as mp
+import sys
 # import sys
 
 # import seaborn as sns
 # sns.set()
 
-filename = "./Data/%s%s%s_N_%g_Field_%s" \
-    % ("Perturbed_" if gv.perturbed else "",
-        "final_",
-        "total" if gv.total else "core", gv.N, gv.Rot)
+# filename = "./Data/%s%s%s_N_%g_Field_%s" \
+#     % ("Perturbed_" if gv.perturbed else "",
+#         "final_",
+#         "total" if gv.total else "core", gv.N, gv.Rot)
+#
+#
+# band_centres = np.genfromtxt("./Data/Band_Centres_%s_%s_%s.csv"
+#                              % ("Energy" if gv.E_plot else "Velocity",
+#                                 "N_%g" % gv.N, "Field_%s" % gv.Rot))
+#
+# data1 = np.genfromtxt('%s_quad_1.csv' % filename)
+# data2 = np.genfromtxt('%s_quad_2.csv' % filename)
+# data3 = np.genfromtxt('%s_quad_3.csv' % filename)
+# data4 = np.genfromtxt('%s_quad_4.csv' % filename)
 
+qd1, qd2, qd3, qd4, total, band_centres = SPC.main(2.4e5, 1.7e5, "final_", False)
 
-band_centres = np.genfromtxt("./Data/Band_Centres_%s_%s_%s.csv"
-                             % ("Energy" if gv.E_plot else "Velocity",
-                                "N_%g" % gv.N, "Field_%s" % gv.Rot))
+# total_data = data1 + data2 + data3 + data4
 
-data1 = np.genfromtxt('%s_quad_1.csv' % filename)
-data2 = np.genfromtxt('%s_quad_2.csv' % filename)
-data3 = np.genfromtxt('%s_quad_3.csv' % filename)
-data4 = np.genfromtxt('%s_quad_4.csv' % filename)
-total_data = data1 + data2 + data3 + data4
-
-fit_array = np.linspace(np.min(band_centres), np.max(band_centres), gv.N)
+# fit_array = np.linspace(np.min(band_centres), np.max(band_centres), gv.N)
 
 # mu1_guess = 700.2  # gv.v_sw[2] / 1e3
 # mu2_guess = 940  # gv.beam_v[2] / 1e3
-variance_guess = 41.9
+# variance_guess = 41.9
 
 
 def gauss(x, N, mu, sg):
@@ -46,36 +50,36 @@ def gauss(x, N, mu, sg):
 # plt.plot(band_centres, gaussfit, '--', label="gauss")
 # plt.legend()
 # plt.show()
-total = spcf.Fit(gv.E_plot, band_centres, total_data, fit_array, "",
-         band_centres[np.argmax(total_data)],
-         variance_guess, np.max(total_data))
-qd1 = spcf.Fit(gv.E_plot, band_centres, data1, fit_array, "",
-         band_centres[np.argmax(data1)],
-         variance_guess, np.max(data1))
-qd2 = spcf.Fit(gv.E_plot, band_centres, data2, fit_array, "",
-         band_centres[np.argmax(data2)],
-         variance_guess, np.max(data2))
-qd3 = spcf.Fit(gv.E_plot, band_centres, data3, fit_array, "",
-         band_centres[np.argmax(data3)],
-         variance_guess, np.max(data3))
-qd4 = spcf.Fit(gv.E_plot, band_centres, data4, fit_array, "",
-         band_centres[np.argmax(data4)],
-         variance_guess, np.max(data4))
-
-
-n1, mu1, sg1 = qd1
-n2, mu2, sg2 = qd2
-n3, mu3, sg3 = qd3
-n4, mu4, sg4 = qd4
-radial_temp = ((total[2] * 1e3)**2) * (cst.m_p / cst.k)
-print("radial_temp: ", radial_temp)
+# total = spcf.Fit(gv.E_plot, band_centres, total_data, fit_array, "",
+#          band_centres[np.argmax(total_data)],
+#          variance_guess, np.max(total_data))
+# qd1 = spcf.Fit(gv.E_plot, band_centres, data1, fit_array, "",
+#          band_centres[np.argmax(data1)],
+#          variance_guess, np.max(data1))
+# qd2 = spcf.Fit(gv.E_plot, band_centres, data2, fit_array, "",
+#          band_centres[np.argmax(data2)],
+#          variance_guess, np.max(data2))
+# qd3 = spcf.Fit(gv.E_plot, band_centres, data3, fit_array, "",
+#          band_centres[np.argmax(data3)],
+#          variance_guess, np.max(data3))
+# qd4 = spcf.Fit(gv.E_plot, band_centres, data4, fit_array, "",
+#          band_centres[np.argmax(data4)],
+#          variance_guess, np.max(data4))
+#
+#
+# n1, mu1, sg1 = qd1
+# n2, mu2, sg2 = qd2
+# n3, mu3, sg3 = qd3
+# n4, mu4, sg4 = qd4
+# radial_temp = ((total[2] * 1e3)**2) * (cst.m_p / cst.k)
+# print("radial_temp: ", radial_temp)
 
 
 def cost_func(t_perp_guess, t_par_guess):
     comment = "Minimisation_Test_"
     # get estimated values
     load = False
-    p1, p2, p3, p4 = SPC.main(t_perp_guess, t_par_guess, comment, load)
+    p1, p2, p3, p4, tf, band_centres = SPC.main(t_perp_guess, t_par_guess, comment, load)
     v_guess = ((cst.k * t_par_guess) / cst.m_p)**0.5 / 1e3
     # p1 = spcf.Fit(gv.E_plot, band_centres, q1, fit_array,
     #          band_centres[np.argmax(q1)], v_guess, np.max(q1))
@@ -113,7 +117,7 @@ def cost_func_wrapper(args):
 
 
 def heatmap():
-    temps = np.linspace(1e5, 3e5, 2).tolist()
+    temps = np.linspace(1e5, 3e5, 12).tolist()
     temp_combos = list(itertools.product(temps, temps))
     # indices = list(range(len(temp_combos)))
     # perp_array = np.linspace(0.5e5, 4e5, 1e2)
@@ -126,7 +130,7 @@ def heatmap():
     newcolors[0] = [1.0, 1.0, 1.0, 1.0]
     newcmp = matplotlib.colors.ListedColormap(newcolors)
 
-    with mp.Pool(3) as pool:
+    with mp.Pool() as pool:
         for i, c in enumerate(pool.imap(cost_func_wrapper, temp_combos)):
             F.flat[i] = c
             print("\033[92mCompleted %d of %d\033[0m" % (i + 1, len(temp_combos)))
@@ -134,28 +138,53 @@ def heatmap():
                 print("\033[91mFailed to converge sensibly for %d\033[0m" % (i + 1))
 
     F[F == 0] = np.amax(F)
-    np.savetxt('%s_%s_F.csv' % (len(temps), gv.Rot), F)
+    np.savetxt('%s_%s_F_nreco.csv' % (len(temps), gv.Rot), F)
+
+
+    # if len(sys.argv) != 3:
+    #     print("Please specify a resolution")
+    #     print("Usage: %s <resolution> <B field>" % tuple(sys.argv[1:]))
+    #     sys.exit(1)
+    #
+    # F = np.genfromtxt('%s_%s_F.csv' % (sys.argv[1], sys.argv[2]))
+    # # cmap = plt.cm.get_cmap('Blues', 2**16)
+    #
+    # min_t = 1e5
+    # max_t = 3e5
+    # nsamples = int(sys.argv[1])
+    expected_min = (170000, 240000)
+    #
+    # temps = np.linspace(min_t, max_t, nsamples).tolist()
+    min_arg = np.unravel_index(np.argmin(F), F.shape)
+    # print("Minimum value in mappable: %g, %g" % min_arg)
+    print("True minimum temperature:  %g, %g" % expected_min)
+
+    temp_arg = (0.5 + np.array(min_arg)) * ((max_t - min_t) / nsamples) + min_t
+    print("Est. minimum temperature: %g, %g" % tuple(temp_arg[::-1].tolist()))
+
+
     f, ax = plt.subplots()
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width, box.height])
     fig = plt.figure("cost function map")
-    plt.plot(170000, 240000, 'ro', label='Expected Minimum')
+    plt.plot(170000, 240000, 'ro', label='True Minimum')
+    plt.plot(temp_arg[1], temp_arg[0], 'kx', label='Estimated Minimum \n at (%g K, %g K)' % tuple(temp_arg[::-1].tolist()))
     plt.figure("decoy")
     mappable = fig.gca().imshow(F, extent=[min(temps), max(temps),
                                            min(temps), max(temps)],
-                                cmap=cmap, norm=matplotlib.colors.LogNorm(np.amin(F), np.amax(F)))
+                                cmap=cmap, norm=matplotlib.colors.LogNorm(np.amin(F), np.amax(F)), origin="lower")
     fig.colorbar(mappable, label="Cost function")
     fig.gca().set_xlabel("$T_{\parallel}$ (K)")
     fig.gca().set_ylabel("$T_{\perp}$ (K)")
     fig.gca().legend(title="B field at (%.02f$^\\circ$, %.02f$^\\circ$)"
                "\n from SPC normal"
-               "\n True $T_{\perp}$ at 2.4e5 K"
-               "\n True $T_{\parallel}$ at 1.7e5 K"
+               "\n True $T_{\parallel}$ at 170000 K"
+               "\n True $T_{\perp}$ at 240000 K"
                % (np.degrees(np.arctan(gv.B[0]/gv.B[2]))
                ,  np.degrees(np.arctan(gv.B[1]/gv.B[2]))),
                loc='center left', bbox_to_anchor=(1.5, 0.5))
     # plt.show()
-    fig.savefig("./Heatmaps/%s_plot.png" % len(temps), bbox_inches="tight")
+    fig.savefig("./Heatmaps/%s_nreco_plot.png" % len(temps), bbox_inches="tight")
 
 
 def cost_func_1D():
@@ -260,5 +289,5 @@ def grad_descent(coeff, t_estimate):
 
 
 # grad_descent(np.array([1e9, 1e8]), radial_temp)
-heatmap()
+# heatmap()
 # cost_func_1D()
