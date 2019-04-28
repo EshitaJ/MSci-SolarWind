@@ -80,7 +80,7 @@ m_array = np.array([-0.39, -0.86, 0.32])
 #n_array = np.array([0, 1, 0])
 #m_array = np.array([0, 0, -1])
 
-#field_array = np.array([1, 1, 0])
+#field_array = np.array([1, 0.2, -0.1])
 field_array = n_array
 field_array = field_array / np.linalg.norm(field_array)
 
