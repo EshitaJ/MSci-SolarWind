@@ -40,7 +40,7 @@ def rotatedMW(vz, vy, vx, v, is_core, n, perp, par, core_fraction):
     T_y = perp
     T_z = par
 
-    vel = np.array([-vx, -vy, -vz])  # in SPC frame, -ve due to look direction
+    vel = np.array([vx, vy, vz])  # in SPC frame, -ve due to look direction
     v_beam = beam_v
 
     if is_core:

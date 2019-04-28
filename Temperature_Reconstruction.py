@@ -29,7 +29,7 @@ import sys
 # data3 = np.genfromtxt('%s_quad_3.csv' % filename)
 # data4 = np.genfromtxt('%s_quad_4.csv' % filename)
 
-qd1, qd2, qd3, qd4, total, band_centres = SPC.main(2.4e5, 1.7e5, "final_", False)
+# qd1, qd2, qd3, qd4, total, band_centres = SPC.main(2.4e5, 1.7e5, "final_vhenry_", False)
 
 # total_data = data1 + data2 + data3 + data4
 
@@ -117,44 +117,44 @@ def cost_func_wrapper(args):
 
 
 def heatmap():
-    temps = np.linspace(1e5, 3e5, 12).tolist()
-    temp_combos = list(itertools.product(temps, temps))
-    # indices = list(range(len(temp_combos)))
-    # perp_array = np.linspace(0.5e5, 4e5, 1e2)
-    # par_array = np.linspace(0.5e5, 4e5, 1e2)
-    F = np.zeros((len(temps), len(temps)))
+    # temps = np.linspace(1e5, 3e5, 12).tolist()
+    # temp_combos = list(itertools.product(temps, temps))
+    # # indices = list(range(len(temp_combos)))
+    # # perp_array = np.linspace(0.5e5, 4e5, 1e2)
+    # # par_array = np.linspace(0.5e5, 4e5, 1e2)
+    # F = np.zeros((len(temps), len(temps)))
+    #
+    # nsamples = 2 ** 16
+    # cmap = plt.cm.get_cmap('Blues', nsamples)
+    #
+    # with mp.Pool() as pool:
+    #     for i, c in enumerate(pool.imap(cost_func_wrapper, temp_combos)):
+    #         F.flat[i] = c
+    #         print("\033[92mCompleted %d of %d\033[0m" % (i + 1, len(temp_combos)))
+    #         if c == 0:
+    #             print("\033[91mFailed to converge sensibly for %d\033[0m" % (i + 1))
+    #
+    # F[F == 0] = np.amax(F)
+    # np.savetxt('%s_%s_F_vhenry.csv' % (len(temps), gv.Rot), F)
 
-    nsamples = 2 ** 16
-    cmap = plt.cm.get_cmap('Blues', nsamples)
-    newcolors = cmap(np.linspace(0, 1, nsamples))
+
+    if len(sys.argv) != 4:
+        print("Please specify a resolution")
+        print("Usage: %s <resolution> <B field> <comment>" % tuple(sys.argv[1:]))
+        sys.exit(1)
+
+    F = np.genfromtxt('%s_%s_F%s.csv' % (sys.argv[1], sys.argv[2], sys.argv[3]))
+    cmap = plt.cm.get_cmap('Blues', 2**16)
+    newcolors = cmap(np.linspace(0, 1, 2**16))
     newcolors[0] = [1.0, 1.0, 1.0, 1.0]
     newcmp = matplotlib.colors.ListedColormap(newcolors)
 
-    with mp.Pool() as pool:
-        for i, c in enumerate(pool.imap(cost_func_wrapper, temp_combos)):
-            F.flat[i] = c
-            print("\033[92mCompleted %d of %d\033[0m" % (i + 1, len(temp_combos)))
-            if c == 0:
-                print("\033[91mFailed to converge sensibly for %d\033[0m" % (i + 1))
-
-    F[F == 0] = np.amax(F)
-    np.savetxt('%s_%s_F_nreco.csv' % (len(temps), gv.Rot), F)
-
-
-    # if len(sys.argv) != 3:
-    #     print("Please specify a resolution")
-    #     print("Usage: %s <resolution> <B field>" % tuple(sys.argv[1:]))
-    #     sys.exit(1)
-    #
-    # F = np.genfromtxt('%s_%s_F.csv' % (sys.argv[1], sys.argv[2]))
-    # # cmap = plt.cm.get_cmap('Blues', 2**16)
-    #
-    # min_t = 1e5
-    # max_t = 3e5
-    # nsamples = int(sys.argv[1])
+    min_t = 1e5
+    max_t = 3e5
+    nsamples = int(sys.argv[1])
     expected_min = (170000, 240000)
     #
-    # temps = np.linspace(min_t, max_t, nsamples).tolist()
+    temps = np.linspace(min_t, max_t, nsamples).tolist()
     min_arg = np.unravel_index(np.argmin(F), F.shape)
     # print("Minimum value in mappable: %g, %g" % min_arg)
     print("True minimum temperature:  %g, %g" % expected_min)
@@ -184,7 +184,7 @@ def heatmap():
                ,  np.degrees(np.arctan(gv.B[1]/gv.B[2]))),
                loc='center left', bbox_to_anchor=(1.5, 0.5))
     # plt.show()
-    fig.savefig("./Heatmaps/%s_nreco_plot.png" % len(temps), bbox_inches="tight")
+    fig.savefig("./Heatmaps/%s_vhenry_plot.png" % len(temps), bbox_inches="tight")
 
 
 def cost_func_1D():
@@ -289,5 +289,5 @@ def grad_descent(coeff, t_estimate):
 
 
 # grad_descent(np.array([1e9, 1e8]), radial_temp)
-# heatmap()
+heatmap()
 # cost_func_1D()

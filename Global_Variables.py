@@ -65,9 +65,10 @@ va = np.linalg.norm(B0) / np.sqrt(cst.mu_0 * constants["n"] * cst.m_p)
 
 
 # v_sw = np.array([20000, 200000, 400000])  # solar wind bulk velocity in m/s
-# bulk_speed = np.array([15000, 20000, 700000])  # sw bulk velocity in m/s
+# bulk_speed = np.array([-15000, -20000, -700000])  # sw bulk velocity in m/s
 # bulk_speed = np.array([50000, 50000, 700000])  # sw bulk velocity in m/s
-bulk_speed = np.array([42900, 43200, 700000])  # sw bulk velocity in m/s
+# bulk_speed = np.array([42900, 43200, 700000])  # sw bulk velocity in m/s
+bulk_speed = np.array([44250, 51549, 714451])  # sw bulk velocity in m/s
 
 v_sc = np.array([0, 0, 0])  # space craft velocity in m/s
 # alfvenic fluctuation
